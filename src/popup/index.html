@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SurfSafe - Scam Detection</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🛡️ SurfSafe</h1>
+        <p class="subtitle">AI-Powered Scam Detection</p>
+      </header>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Analyzing website...</p>
+      </div>
+
+      <div id="error" class="error hidden">
+        <p id="error-message"></p>
+        <button id="configure-btn" class="btn btn-primary">Configure API</button>
+      </div>
+
+      <div id="results" class="results hidden">
+        <div id="risk-badge" class="risk-badge">
+          <span id="risk-level">SAFE</span>
+        </div>
+
+        <div class="section">
+          <h3>Confidence</h3>
+          <div class="confidence-bar">
+            <div id="confidence-fill" class="confidence-fill"></div>
+          </div>
+          <p id="confidence-text" class="confidence-text">0%</p>
+        </div>
+
+        <div class="section">
+          <h3>Threat Indicators</h3>
+          <div id="threats-list" class="threats-list">
+            <p class="no-threats">No threats detected</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Analysis</h3>
+          <p id="explanation" class="explanation"></p>
+        </div>
+
+        <div class="timestamp">
+          <small id="timestamp">Analyzed: --</small>
+        </div>
+      </div>
+
+      <footer>
+        <button id="reanalyze-btn" class="btn btn-secondary">Re-analyze</button>
+        <button id="options-btn" class="btn btn-link">Settings</button>
+      </footer>
+    </div>
+
+    <script type="module" src="./index.ts"></script>
+  </body>
+</html>

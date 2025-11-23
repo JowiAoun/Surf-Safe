@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SurfSafe Settings</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🛡️ SurfSafe Settings</h1>
+        <p class="subtitle">Configure your AI-powered scam detection</p>
+      </header>
+
+      <main>
+        <section class="card">
+          <h2>LLM API Configuration</h2>
+          <p class="description">
+            Configure your OpenAI-compatible API endpoint to enable scam detection.
+          </p>
+
+          <form id="config-form">
+            <div class="form-group">
+              <label for="api-endpoint">API Endpoint URL</label>
+              <input
+                type="url"
+                id="api-endpoint"
+                name="apiEndpoint"
+                placeholder="https://api.openai.com/v1/chat/completions"
+                required
+              />
+              <small class="help-text">
+                Enter the complete URL for your OpenAI-compatible chat completions endpoint
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="api-key">API Key</label>
+              <input
+                type="password"
+                id="api-key"
+                name="apiKey"
+                placeholder="sk-..."
+                required
+              />
+              <small class="help-text">Your API key will be stored securely in browser storage</small>
+            </div>
+
+            <div class="form-group">
+              <label for="model">Model Name</label>
+              <input
+                type="text"
+                id="model"
+                name="model"
+                placeholder="gpt-4o-mini"
+                required
+              />
+              <small class="help-text">
+                Recommended: gpt-4o-mini, gpt-3.5-turbo, or any compatible model
+              </small>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save Configuration</button>
+              <button type="button" id="test-btn" class="btn btn-secondary">Test Connection</button>
+            </div>
+          </form>
+
+          <div id="status" class="status hidden">
+            <p id="status-message"></p>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Common API Providers</h2>
+          <div class="providers">
+            <div class="provider">
+              <h3>OpenAI</h3>
+              <code>https://api.openai.com/v1/chat/completions</code>
+              <p>Model: gpt-4o-mini, gpt-3.5-turbo</p>
+            </div>
+            <div class="provider">
+              <h3>Anthropic Claude</h3>
+              <code>https://api.anthropic.com/v1/messages</code>
+              <p>Model: claude-3-haiku-20240307</p>
+              <small>Note: May require adapter for OpenAI compatibility</small>
+            </div>
+            <div class="provider">
+              <h3>Local Ollama</h3>
+              <code>http://localhost:11434/v1/chat/completions</code>
+              <p>Model: llama2, mistral, etc.</p>
+            </div>
+            <div class="provider">
+              <h3>OpenRouter</h3>
+              <code>https://openrouter.ai/api/v1/chat/completions</code>
+              <p>Model: Various models available</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>About</h2>
+          <p>
+            SurfSafe uses AI to analyze websites in real-time and detect potential scam indicators.
+            Your privacy is important - all analysis happens through your configured API, and no data
+            is sent to SurfSafe servers.
+          </p>
+          <p class="version">Version 1.0.0</p>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./index.ts"></script>
+  </body>
+</html>

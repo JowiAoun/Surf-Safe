@@ -25,16 +25,50 @@ export enum RiskLevel {
 }
 
 /**
+ * Link information extracted from page
+ */
+export interface ExtractedLink {
+  href: string;
+  text: string;
+  isExternal?: boolean;
+}
+
+/**
+ * Suspicious link information
+ */
+export interface SuspiciousLink {
+  href: string;
+  text: string;
+  patterns: string[];
+}
+
+/**
+ * Form information extracted from page
+ */
+export interface ExtractedForm {
+  action: string;
+  method?: string;
+  fields: string[];
+  hasSensitiveFields?: boolean;
+}
+
+/**
  * Page analysis request sent from content script
  */
 export interface PageAnalysisRequest {
   url: string;
+  domain?: string;
   title: string;
   metaDescription?: string;
+  metaKeywords?: string;
   headings: string[];
-  links: { href: string; text: string }[];
-  forms: { action: string; fields: string[] }[];
+  links: ExtractedLink[];
+  suspiciousLinks?: SuspiciousLink[];
+  externalLinkCount?: number;
+  forms: ExtractedForm[];
   bodyText: string;
+  urlPatterns?: string[];
+  extractedAt?: number;
 }
 
 /**

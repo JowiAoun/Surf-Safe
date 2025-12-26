@@ -126,3 +126,89 @@ export interface CachedAnalysis {
   result: AnalysisResult;
   expiresAt: number;
 }
+
+/**
+ * API retry configuration
+ */
+export interface RetryConfig {
+  maxRetries: number;
+  initialDelayMs: number;
+  maxDelayMs: number;
+  backoffMultiplier: number;
+}
+
+/**
+ * Default retry configuration
+ */
+export const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  initialDelayMs: 1000,
+  maxDelayMs: 30000,
+  backoffMultiplier: 2,
+};
+
+/**
+ * API error types for better error handling
+ */
+export enum ApiErrorType {
+  NETWORK_ERROR = 'NETWORK_ERROR',
+  TIMEOUT = 'TIMEOUT',
+  RATE_LIMITED = 'RATE_LIMITED',
+  AUTHENTICATION_ERROR = 'AUTHENTICATION_ERROR',
+  INVALID_RESPONSE = 'INVALID_RESPONSE',
+  SERVER_ERROR = 'SERVER_ERROR',
+  UNKNOWN = 'UNKNOWN',
+}
+
+/**
+ * Extended API error with type and retry information
+ */
+export class ApiError extends Error {
+  type: ApiErrorType;
+  statusCode?: number;
+  retryable: boolean;
+  retryAfterMs?: number;
+
+  constructor(
+    message: string,
+    type: ApiErrorType,
+    options?: {
+      statusCode?: number;
+      retryable?: boolean;
+      retryAfterMs?: number;
+    }
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    this.type = type;
+    this.statusCode = options?.statusCode;
+    this.retryable = options?.retryable ?? false;
+    this.retryAfterMs = options?.retryAfterMs;
+  }
+}
+
+/**
+ * API request options
+ */
+export interface ApiRequestOptions {
+  timeout?: number;
+  retryConfig?: RetryConfig;
+  signal?: AbortSignal;
+}
+
+/**
+ * Threat detail with confidence score
+ */
+export interface ThreatDetail {
+  label: ThreatLabel;
+  confidence: number;
+  evidence?: string;
+}
+
+/**
+ * Enhanced analysis result with detailed threat information
+ */
+export interface EnhancedAnalysisResult extends AnalysisResult {
+  threatDetails?: ThreatDetail[];
+  analysisVersion?: string;
+}

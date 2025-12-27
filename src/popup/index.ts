@@ -194,7 +194,8 @@ function updateGauge(score: number): void {
   const offset = circumference - (score / 100) * circumference;
   
   gaugeFillEl.style.strokeDashoffset = offset.toString();
-  gaugeFillEl.className = `gauge-fill ${getScoreColorClass(score)}`;
+  // Use setAttribute for SVG elements (className is read-only on SVGElement)
+  gaugeFillEl.setAttribute('class', `gauge-fill ${getScoreColorClass(score)}`);
   
   animateScore(score);
 }
@@ -325,8 +326,17 @@ async function loadAnalysis(): Promise<AnalysisResult | null> {
     resultsEl.classList.add('hidden');
     errorEl.classList.add('hidden');
 
-    // Get current analysis from background
-    const message = createMessage(MessageType.GET_CURRENT_ANALYSIS);
+    // Get current tab ID
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tabId = tabs[0]?.id;
+    
+    if (!tabId) {
+      displayError('Could not determine current tab.');
+      return null;
+    }
+
+    // Get current analysis from background, passing tabId
+    const message = createMessage(MessageType.GET_CURRENT_ANALYSIS, { tabId });
     const result = await sendToBackground<AnalysisResult | null>(message);
 
     if (result) {

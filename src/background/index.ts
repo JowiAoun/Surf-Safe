@@ -26,7 +26,8 @@ addMessageListener(async (message: Message, sender) => {
       return handleAnalyzePage(message.payload as PageAnalysisRequest, sender.tab?.id);
 
     case MessageType.GET_CURRENT_ANALYSIS:
-      return handleGetCurrentAnalysis(sender.tab?.id);
+      // Popup sends tabId in payload since sender.tab is undefined for popups
+      return handleGetCurrentAnalysis(message.payload?.tabId ?? sender.tab?.id);
 
     case MessageType.CLEAR_CACHE:
       return handleClearCache(message.payload?.domain);

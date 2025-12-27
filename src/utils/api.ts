@@ -238,10 +238,31 @@ export class LLMApiClient {
           }
 
           const data = await response.json();
+          
+          // Log the full response for debugging
+          console.log('API Response:', JSON.stringify(data, null, 2));
+          
+          // Check for API-level errors in the response
+          if (data.error) {
+            const errorMsg = data.error.message || data.error.code || JSON.stringify(data.error);
+            throw new ApiError(
+              `API error: ${errorMsg}`,
+              ApiErrorType.INVALID_RESPONSE,
+              { retryable: false }
+            );
+          }
+          
           const content = data.choices?.[0]?.message?.content;
 
           if (!content) {
-            throw new ApiError('No content in API response', ApiErrorType.INVALID_RESPONSE);
+            // Log what we got to help debug
+            console.error('Unexpected API response structure:', data);
+            throw new ApiError(
+              `No content in API response. ` +
+              `This usually means: wrong model name, or API key lacks permissions. ` +
+              `Response had: ${Object.keys(data).join(', ') || 'empty object'}`,
+              ApiErrorType.INVALID_RESPONSE
+            );
           }
 
           return this.parseResponse(content);

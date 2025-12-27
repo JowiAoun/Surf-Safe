@@ -1,3 +1,4 @@
+import browser from 'webextension-polyfill';
 import { MessageType, PageAnalysisRequest, AnalysisResult } from '@/types';
 import { sendToBackground, createMessage } from '@/utils/messaging';
 import { debounce, DEBOUNCE_DELAY_MS } from '@/utils/cache';
@@ -408,6 +409,19 @@ function init(): void {
     originalReplaceState.apply(this, args);
     setTimeout(handleUrlChange, 500);
   };
+  
+  // Listen for trigger from popup (when popup opens but no analysis exists)
+  browser.runtime.onMessage.addListener((message: { type?: string }) => {
+    if (message?.type === 'TRIGGER_ANALYSIS') {
+      console.log('Received TRIGGER_ANALYSIS from popup');
+      // Force analysis even if URL matches
+      lastAnalyzedUrl = null;
+      isAnalyzing = false;
+      performAnalysis();
+      return Promise.resolve({ triggered: true });
+    }
+    return undefined;
+  });
 }
 
 // Start the content script

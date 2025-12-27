@@ -389,9 +389,10 @@ async function loadAnalysis(): Promise<AnalysisResult | null> {
     // Show loading
     showLoading('Analyzing website...');
 
-    // Get current tab ID
+    // Get current tab ID and URL
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    const tabId = tabs[0]?.id;
+    const tab = tabs[0];
+    const tabId = tab?.id;
     
     if (!tabId) {
       displayError('Could not determine current tab.');
@@ -409,9 +410,26 @@ async function loadAnalysis(): Promise<AnalysisResult | null> {
       displayResults(result);
       return result;
     } else {
-      // No result yet - show loading and start polling
-      showLoading('Analyzing website... This may take a few seconds.');
-      startPolling();
+      // No result yet - if we can't trigger analysis, it might mean the extension
+      // was loaded AFTER the page, so the content script isn't running.
+      // In this case, we should reload the page.
+      
+      showLoading('Analysis requires page reload...');
+      
+      try {
+        // Try to trigger analysis first
+        await browser.tabs.sendMessage(tabId, { type: 'TRIGGER_ANALYSIS' });
+        
+        // If successful, just poll
+        showLoading('Analyzing website... This may take a few seconds.');
+        startPolling();
+      } catch {
+        // Content script not responding - reload the page
+        showLoading('Reloading page to enable analysis...');
+        await browser.tabs.reload(tabId);
+        window.close(); // Close popup as it will be disconnected anyway
+      }
+      
       return null;
     }
   } catch (error) {

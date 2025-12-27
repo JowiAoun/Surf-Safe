@@ -1,5 +1,14 @@
 import browser from 'webextension-polyfill';
-import { ApiConfig, StorageKey, CachedAnalysis } from '@/types';
+import { ApiConfig, StorageKey, CachedAnalysis, ExtensionSettings, SensitivityLevel } from '@/types';
+
+/**
+ * Default extension settings
+ */
+export const DEFAULT_SETTINGS: ExtensionSettings = {
+  sensitivity: SensitivityLevel.MEDIUM,
+  whitelistedDomains: [],
+  theme: 'system',
+};
 
 /**
  * Get API configuration from storage
@@ -14,6 +23,59 @@ export async function getApiConfig(): Promise<ApiConfig | null> {
  */
 export async function saveApiConfig(config: ApiConfig): Promise<void> {
   await browser.storage.sync.set({ [StorageKey.API_CONFIG]: config });
+}
+
+/**
+ * Get extension settings from storage
+ */
+export async function getExtensionSettings(): Promise<ExtensionSettings> {
+  const result = await browser.storage.sync.get(StorageKey.EXTENSION_SETTINGS);
+  const stored = result[StorageKey.EXTENSION_SETTINGS] as Partial<ExtensionSettings> | undefined;
+  return { ...DEFAULT_SETTINGS, ...stored };
+}
+
+/**
+ * Save extension settings to storage
+ */
+export async function saveExtensionSettings(settings: ExtensionSettings): Promise<void> {
+  await browser.storage.sync.set({ [StorageKey.EXTENSION_SETTINGS]: settings });
+}
+
+/**
+ * Check if a domain is whitelisted
+ */
+export async function isWhitelistedDomain(domain: string): Promise<boolean> {
+  const settings = await getExtensionSettings();
+  const normalizedDomain = domain.toLowerCase().replace(/^www\./, '');
+  return settings.whitelistedDomains.some((d) => {
+    const normalizedWhitelisted = d.toLowerCase().replace(/^www\./, '');
+    return normalizedDomain === normalizedWhitelisted || normalizedDomain.endsWith('.' + normalizedWhitelisted);
+  });
+}
+
+/**
+ * Add a domain to the whitelist
+ */
+export async function addWhitelistedDomain(domain: string): Promise<void> {
+  const settings = await getExtensionSettings();
+  const normalizedDomain = domain.toLowerCase().replace(/^www\./, '').replace(/^https?:\/\//, '').split('/')[0];
+  
+  if (!settings.whitelistedDomains.includes(normalizedDomain)) {
+    settings.whitelistedDomains.push(normalizedDomain);
+    await saveExtensionSettings(settings);
+  }
+}
+
+/**
+ * Remove a domain from the whitelist
+ */
+export async function removeWhitelistedDomain(domain: string): Promise<void> {
+  const settings = await getExtensionSettings();
+  const normalizedDomain = domain.toLowerCase().replace(/^www\./, '');
+  settings.whitelistedDomains = settings.whitelistedDomains.filter(
+    (d) => d.toLowerCase().replace(/^www\./, '') !== normalizedDomain
+  );
+  await saveExtensionSettings(settings);
 }
 
 /**

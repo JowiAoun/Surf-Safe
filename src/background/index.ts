@@ -1,6 +1,6 @@
 import browser from 'webextension-polyfill';
-import { Message, MessageType, PageAnalysisRequest, AnalysisResult } from '@/types';
-import { getApiConfig, getCachedAnalysis, saveCachedAnalysis, clearExpiredCache } from '@/utils/storage';
+import { Message, MessageType, PageAnalysisRequest, AnalysisResult, RiskLevel, SENSITIVITY_THRESHOLDS } from '@/types';
+import { getApiConfig, getCachedAnalysis, saveCachedAnalysis, clearExpiredCache, isWhitelistedDomain, getExtensionSettings } from '@/utils/storage';
 import { createApiClient } from '@/utils/api';
 import { addMessageListener } from '@/utils/messaging';
 
@@ -34,8 +34,25 @@ addMessageListener(async (message: Message, sender) => {
 async function handleAnalyzePage(
   request: PageAnalysisRequest,
   tabId?: number
-): Promise<AnalysisResult | { error: string }> {
+): Promise<AnalysisResult | { error: string } | { whitelisted: true }> {
   try {
+    // Check if domain is whitelisted
+    const domain = request.domain || new URL(request.url).hostname;
+    if (await isWhitelistedDomain(domain)) {
+      console.log('Domain is whitelisted, skipping analysis:', domain);
+      const whitelistedResult: AnalysisResult = {
+        riskLevel: RiskLevel.SAFE,
+        threats: [],
+        explanation: 'This domain is in your whitelist and was not analyzed.',
+        confidence: 1.0,
+        timestamp: Date.now(),
+      };
+      if (tabId) {
+        tabAnalysisResults.set(tabId, whitelistedResult);
+      }
+      return whitelistedResult;
+    }
+
     // Check cache first
     const cached = await getCachedAnalysis(request.url);
     if (cached) {
@@ -61,7 +78,21 @@ async function handleAnalyzePage(
 
     // Create API client and analyze
     const apiClient = createApiClient(config);
-    const result = await apiClient.analyzePage(request);
+    let result = await apiClient.analyzePage(request);
+
+    // Apply sensitivity filtering
+    const settings = await getExtensionSettings();
+    const threshold = SENSITIVITY_THRESHOLDS[settings.sensitivity];
+    
+    // Filter out low-confidence threats based on sensitivity
+    if (result.confidence < threshold && result.riskLevel !== RiskLevel.CRITICAL) {
+      // For low-confidence results on non-critical sites, adjust risk level
+      result = {
+        ...result,
+        threats: result.threats.filter(() => result.confidence >= threshold),
+        riskLevel: result.confidence < threshold / 2 ? RiskLevel.SAFE : result.riskLevel,
+      };
+    }
 
     console.log('Analysis complete:', result);
 

@@ -7,15 +7,21 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="container">
+    <div class="container" data-theme="light">
       <header>
-        <h1>🛡️ SurfSafe Settings</h1>
+        <div class="header-content">
+          <h1>🛡️ SurfSafe Settings</h1>
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+            <span class="theme-icon">🌙</span>
+          </button>
+        </div>
         <p class="subtitle">Configure your AI-powered scam detection</p>
       </header>
 
       <main>
+        <!-- API Configuration -->
         <section class="card">
-          <h2>LLM API Configuration</h2>
+          <h2>🔑 LLM API Configuration</h2>
           <p class="description">
             Configure your OpenAI-compatible API endpoint to enable scam detection.
           </p>
@@ -37,14 +43,19 @@
 
             <div class="form-group">
               <label for="api-key">API Key</label>
-              <input
-                type="password"
-                id="api-key"
-                name="apiKey"
-                placeholder="sk-..."
-                required
-              />
-              <small class="help-text">Your API key will be stored securely in browser storage</small>
+              <div class="input-with-toggle">
+                <input
+                  type="password"
+                  id="api-key"
+                  name="apiKey"
+                  placeholder="sk-..."
+                  required
+                />
+                <button type="button" id="toggle-key-visibility" class="visibility-toggle" aria-label="Toggle password visibility">
+                  👁️
+                </button>
+              </div>
+              <small id="api-key-hint" class="help-text">Your API key will be stored securely in browser storage</small>
             </div>
 
             <div class="form-group">
@@ -62,8 +73,8 @@
             </div>
 
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary">Save Configuration</button>
-              <button type="button" id="test-btn" class="btn btn-secondary">Test Connection</button>
+              <button type="submit" class="btn btn-primary">💾 Save Configuration</button>
+              <button type="button" id="test-btn" class="btn btn-secondary">🔌 Test Connection</button>
             </div>
           </form>
 
@@ -72,35 +83,93 @@
           </div>
         </section>
 
+        <!-- Detection Settings -->
         <section class="card">
-          <h2>Common API Providers</h2>
-          <div class="providers">
-            <div class="provider">
-              <h3>OpenAI</h3>
-              <code>https://api.openai.com/v1/chat/completions</code>
-              <p>Model: gpt-4o-mini, gpt-3.5-turbo</p>
+          <h2>🎚️ Detection Sensitivity</h2>
+          <p class="description">
+            Adjust how aggressively SurfSafe flags potential threats.
+          </p>
+
+          <div class="sensitivity-control">
+            <div class="sensitivity-labels">
+              <span class="sensitivity-label" data-level="low">Low</span>
+              <span class="sensitivity-label" data-level="medium">Medium</span>
+              <span class="sensitivity-label" data-level="high">High</span>
             </div>
-            <div class="provider">
-              <h3>Anthropic Claude</h3>
-              <code>https://api.anthropic.com/v1/messages</code>
-              <p>Model: claude-3-haiku-20240307</p>
-              <small>Note: May require adapter for OpenAI compatibility</small>
-            </div>
-            <div class="provider">
-              <h3>Local Ollama</h3>
-              <code>http://localhost:11434/v1/chat/completions</code>
-              <p>Model: llama2, mistral, etc.</p>
-            </div>
-            <div class="provider">
-              <h3>OpenRouter</h3>
-              <code>https://openrouter.ai/api/v1/chat/completions</code>
-              <p>Model: Various models available</p>
+            <input
+              type="range"
+              id="sensitivity-slider"
+              min="0"
+              max="2"
+              value="1"
+              class="sensitivity-slider"
+            />
+            <div class="sensitivity-descriptions">
+              <p id="sensitivity-description" class="sensitivity-description">
+                Balanced detection - catches most threats while minimizing false positives.
+              </p>
             </div>
           </div>
         </section>
 
+        <!-- Whitelist -->
         <section class="card">
-          <h2>About</h2>
+          <h2>✅ Trusted Domains</h2>
+          <p class="description">
+            Websites in this list will not be scanned. Use this for sites you trust completely.
+          </p>
+
+          <div class="whitelist-input-group">
+            <input
+              type="text"
+              id="whitelist-input"
+              placeholder="example.com"
+              class="whitelist-input"
+            />
+            <button type="button" id="add-whitelist-btn" class="btn btn-primary btn-sm">+ Add</button>
+          </div>
+
+          <div id="whitelist-tags" class="whitelist-tags">
+            <p class="empty-whitelist">No domains whitelisted</p>
+          </div>
+        </section>
+
+        <!-- Providers Reference -->
+        <section class="card collapsible">
+          <button class="card-header-toggle" id="providers-toggle" aria-expanded="false">
+            <h2>📚 Common API Providers</h2>
+            <span class="toggle-icon">▼</span>
+          </button>
+          <div id="providers-content" class="card-content collapsed">
+            <div class="providers">
+              <div class="provider">
+                <h3>OpenAI</h3>
+                <code>https://api.openai.com/v1/chat/completions</code>
+                <p>Model: gpt-4o-mini, gpt-3.5-turbo</p>
+              </div>
+              <div class="provider">
+                <h3>Anthropic Claude</h3>
+                <code>https://api.anthropic.com/v1/messages</code>
+                <p>Model: claude-3-haiku-20240307</p>
+                <small>Note: May require adapter for OpenAI compatibility</small>
+              </div>
+              <div class="provider">
+                <h3>Local Ollama</h3>
+                <code>http://localhost:11434/v1/chat/completions</code>
+                <p>Model: llama2, mistral, etc.</p>
+              </div>
+              <div class="provider">
+                <h3>OpenRouter</h3>
+                <code>https://openrouter.ai/api/v1/chat/completions</code>
+                <p>Model: Various models available</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- About -->
+        <section class="card">
+          <h2>ℹ️ About</h2>
           <p>
             SurfSafe uses AI to analyze websites in real-time and detect potential scam indicators.
             Your privacy is important - all analysis happens through your configured API, and no data

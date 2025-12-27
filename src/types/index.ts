@@ -116,6 +116,35 @@ export enum StorageKey {
   API_CONFIG = 'apiConfig',
   ANALYSIS_CACHE = 'analysisCache',
   ANALYSIS_HISTORY = 'analysisHistory',
+  EXTENSION_SETTINGS = 'extensionSettings',
+  THEME = 'theme',
+}
+
+/**
+ * Sensitivity level for threat detection
+ */
+export enum SensitivityLevel {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+}
+
+/**
+ * Confidence thresholds per sensitivity level
+ */
+export const SENSITIVITY_THRESHOLDS: Record<SensitivityLevel, number> = {
+  [SensitivityLevel.LOW]: 0.8,    // Only high-confidence threats
+  [SensitivityLevel.MEDIUM]: 0.5, // Balanced detection
+  [SensitivityLevel.HIGH]: 0.3,   // Catch more potential threats
+};
+
+/**
+ * Extension settings stored in chrome.storage
+ */
+export interface ExtensionSettings {
+  sensitivity: SensitivityLevel;
+  whitelistedDomains: string[];
+  theme: 'light' | 'dark' | 'system';
 }
 
 /**

@@ -177,7 +177,24 @@ export class LLMApiClient {
 
           clearTimeout(timeoutId);
 
+          // Check content type - API should return JSON
+          const contentType = response.headers.get('content-type') || '';
+          const isJsonResponse = contentType.includes('application/json');
+
           if (!response.ok) {
+            // If we got HTML instead of JSON, it's likely an incorrect endpoint
+            if (!isJsonResponse) {
+              const text = await response.text();
+              if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                throw new ApiError(
+                  `API endpoint returned HTML instead of JSON. ` +
+                  `This usually means the endpoint URL is incorrect. `,
+                  ApiErrorType.INVALID_RESPONSE,
+                  { statusCode: response.status, retryable: false }
+                );
+              }
+            }
+
             const apiError = await createApiErrorFromResponse(response);
 
             // Don't retry non-retryable errors
@@ -200,6 +217,24 @@ export class LLMApiClient {
             }
 
             throw apiError;
+          }
+
+          // Verify response is JSON before parsing
+          if (!isJsonResponse) {
+            const text = await response.text();
+            if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+              throw new ApiError(
+                `API returned HTML instead of JSON. Check your API endpoint URL. ` +
+                `Expected: https://openrouter.ai/api/v1/chat/completions (for OpenRouter)`,
+                ApiErrorType.INVALID_RESPONSE,
+                { retryable: false }
+              );
+            }
+            throw new ApiError(
+              `API returned unexpected content type: ${contentType}`,
+              ApiErrorType.INVALID_RESPONSE,
+              { retryable: false }
+            );
           }
 
           const data = await response.json();

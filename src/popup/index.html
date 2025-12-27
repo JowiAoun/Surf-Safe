@@ -8,23 +8,27 @@
   </head>
   <body>
     <div class="container" data-theme="light">
-      <header>
+      <header id="header-bg">
         <div class="header-content">
-          <div class="surf-character-container">
-            <img id="surf-character" src="../../assets/surf_fine.png" alt="Surf Character" class="surf-character" />
-          </div>
           <h1>🛡️ SurfSafe</h1>
           <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
             <span class="theme-icon">🌙</span>
           </button>
         </div>
-        <p class="subtitle">AI-Powered Surf Guard</p>
+        <p class="subtitle">Prepare your gear for safe surfing</p>
         <p id="current-domain" class="domain-display"></p>
       </header>
 
       <div id="loading" class="loading">
         <div class="spinner"></div>
         <p>Scouting the waters...</p>
+      </div>
+
+      <div id="setup" class="setup hidden">
+        <div class="setup-icon">🏄‍♂️</div>
+        <h2>Ready to Surf Safe?</h2>
+        <p>Configure your API to start surfing safely.</p>
+        <button id="setup-btn" class="btn btn-primary btn-large">⚙️ Set Up API</button>
       </div>
 
       <div id="error" class="error hidden">

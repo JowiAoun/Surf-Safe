@@ -1,7 +1,7 @@
 import browser from 'webextension-polyfill';
 import { MessageType, AnalysisResult, RiskLevel, ThreatLabel, FeedbackType, UserFeedback } from '@/types';
 import { sendToBackground, createMessage } from '@/utils/messaging';
-import { saveUserFeedback, generateExportReport } from '@/utils/storage';
+import { saveUserFeedback, generateExportReport, getApiConfig } from '@/utils/storage';
 
 // ============================================================================
 // DOM Elements
@@ -225,22 +225,22 @@ function renderThreats(threats: ThreatLabel[]): void {
 }
 
 /**
- * Update surf character image based on score
+ * Update header background image based on score
  */
-function updateSurfCharacter(score: number): void {
-  const charImg = document.getElementById('surf-character') as HTMLImageElement;
-  if (!charImg) return;
+function updateHeaderBackground(score: number): void {
+  const headerEl = document.getElementById('header-bg');
+  if (!headerEl) return;
 
+  let imagePath: string;
   if (score >= 80) {
-    charImg.src = '../../assets/surf_good.png';
-    charImg.alt = 'Smooth Surfing';
+    imagePath = '/assets/surf_good.png';
   } else if (score >= 50) {
-    charImg.src = '../../assets/surf_fine.png';
-    charImg.alt = 'Choppy Waters';
+    imagePath = '/assets/surf_fine.png';
   } else {
-    charImg.src = '../../assets/surf_bad.png';
-    charImg.alt = 'Rough Seals / Shark';
+    imagePath = '/assets/surf_bad.png';
   }
+  
+  headerEl.style.setProperty('--header-bg-image', `url('${imagePath}')`);
 }
 
 /**
@@ -255,7 +255,7 @@ function displayResults(result: AnalysisResult): void {
   // Calculate and display safety score
   const safetyScore = calculateSafetyScore(result);
   updateGauge(safetyScore);
-  updateSurfCharacter(safetyScore);
+  updateHeaderBackground(safetyScore);
 
   // Display risk level
   riskLevelEl.textContent = result.riskLevel;
@@ -635,6 +635,26 @@ async function init(): Promise<void> {
   }
   
   await displayCurrentDomain();
+  
+  // Check if API is configured
+  const apiConfig = await getApiConfig();
+  if (!apiConfig || !apiConfig.apiKey) {
+    // Show setup screen
+    loadingEl.classList.add('hidden');
+    resultsEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    const setupEl = document.getElementById('setup');
+    if (setupEl) {
+      setupEl.classList.remove('hidden');
+    }
+    
+    // Add listener for setup button
+    const setupBtn = document.getElementById('setup-btn');
+    if (setupBtn) {
+      setupBtn.addEventListener('click', openOptions);
+    }
+    return;
+  }
   
   // Load analysis when popup opens
   const analysis = await loadAnalysis();

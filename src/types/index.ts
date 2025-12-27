@@ -170,9 +170,9 @@ export enum SensitivityLevel {
  * Confidence thresholds per sensitivity level
  */
 export const SENSITIVITY_THRESHOLDS: Record<SensitivityLevel, number> = {
-  [SensitivityLevel.LOW]: 0.8,    // Only high-confidence threats
-  [SensitivityLevel.MEDIUM]: 0.5, // Balanced detection
-  [SensitivityLevel.HIGH]: 0.3,   // Catch more potential threats
+  [SensitivityLevel.LOW]: 0.9,    // Only highest-confidence threats
+  [SensitivityLevel.MEDIUM]: 0.8, // Balanced - previously LOW
+  [SensitivityLevel.HIGH]: 0.5,   // More aggressive - previously MEDIUM
 };
 
 /**

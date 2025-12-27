@@ -53,11 +53,31 @@ body {
 
 header {
   background: var(--accent-gradient);
+  background-image: url('/assets/surf_good.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   color: white;
   padding: 30px;
   border-radius: 12px;
   margin-bottom: 24px;
   text-align: center;
+  position: relative;
+}
+
+/* Dark overlay for text readability */
+header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5));
+  border-radius: 12px;
+  z-index: 0;
+}
+
+header > * {
+  position: relative;
+  z-index: 1;
 }
 
 .header-content {
@@ -69,7 +89,8 @@ header {
 
 header h1 {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .theme-toggle {
@@ -493,6 +514,13 @@ main {
 .provider small {
   font-size: 10px;
   color: var(--text-muted);
+}
+
+/* Card text for About section */
+.card > p {
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 /* Version */

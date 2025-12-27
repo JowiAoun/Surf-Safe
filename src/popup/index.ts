@@ -317,14 +317,65 @@ async function displayCurrentDomain(): Promise<void> {
 // ============================================================================
 
 /**
+ * Show loading state with custom message
+ */
+function showLoading(message: string = 'Analyzing website...'): void {
+  loadingEl.classList.remove('hidden');
+  resultsEl.classList.add('hidden');
+  errorEl.classList.add('hidden');
+  const loadingText = loadingEl.querySelector('p');
+  if (loadingText) {
+    loadingText.textContent = message;
+  }
+}
+
+/**
+ * Polling interval for checking analysis status
+ */
+let pollingInterval: number | null = null;
+let currentTabId: number | null = null;
+
+/**
+ * Start polling for analysis completion
+ */
+function startPolling(): void {
+  if (pollingInterval) return; // Already polling
+  
+  pollingInterval = window.setInterval(async () => {
+    if (!currentTabId) return;
+    
+    try {
+      const message = createMessage(MessageType.GET_CURRENT_ANALYSIS, { tabId: currentTabId });
+      const result = await sendToBackground<AnalysisResult | null>(message);
+      
+      if (result) {
+        stopPolling();
+        displayResults(result);
+        currentAnalysis = result;
+      }
+    } catch (error) {
+      console.error('Polling error:', error);
+    }
+  }, 1000); // Poll every second
+}
+
+/**
+ * Stop polling
+ */
+function stopPolling(): void {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
+/**
  * Load current analysis
  */
 async function loadAnalysis(): Promise<AnalysisResult | null> {
   try {
     // Show loading
-    loadingEl.classList.remove('hidden');
-    resultsEl.classList.add('hidden');
-    errorEl.classList.add('hidden');
+    showLoading('Analyzing website...');
 
     // Get current tab ID
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
@@ -334,16 +385,21 @@ async function loadAnalysis(): Promise<AnalysisResult | null> {
       displayError('Could not determine current tab.');
       return null;
     }
+    
+    currentTabId = tabId;
 
     // Get current analysis from background, passing tabId
     const message = createMessage(MessageType.GET_CURRENT_ANALYSIS, { tabId });
     const result = await sendToBackground<AnalysisResult | null>(message);
 
     if (result) {
+      stopPolling();
       displayResults(result);
       return result;
     } else {
-      displayError('No analysis available yet. Please wait for the page to be analyzed.');
+      // No result yet - show loading and start polling
+      showLoading('Analyzing website... This may take a few seconds.');
+      startPolling();
       return null;
     }
   } catch (error) {

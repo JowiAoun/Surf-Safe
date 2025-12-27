@@ -30,7 +30,7 @@ const createPNG = (size, color = '#667eea') => {
 const iconsDir = path.join(__dirname, '../assets/icons');
 
 // Create SVG files (browsers can use SVG in extensions)
-const sizes = [16, 48, 128];
+const sizes = [16, 32, 48, 128];
 
 sizes.forEach(size => {
   const svg = createPNG(size);

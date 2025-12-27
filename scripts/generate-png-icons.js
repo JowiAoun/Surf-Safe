@@ -7,7 +7,7 @@ const path = require('path');
 const sharp = require('sharp');
 
 const iconsDir = path.join(__dirname, '../assets/icons');
-const sizes = [16, 48, 128];
+const sizes = [16, 32, 48, 128];
 
 async function generateIcons() {
   for (const size of sizes) {

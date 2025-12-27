@@ -5,8 +5,8 @@
 
 set -e
 
-echo "🛡️ SurfSafe Distribution Packager"
-echo "=================================="
+echo "SurfSafe Distribution Packager"
+echo "=============================="
 
 # Colors for output
 GREEN='\033[0;32m'

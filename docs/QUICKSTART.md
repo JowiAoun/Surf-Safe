@@ -114,4 +114,4 @@ Cached results help minimize costs. A typical browsing session:
 
 ---
 
-Happy safe browsing! 🛡️
+Happy safe browsing!

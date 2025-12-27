@@ -441,7 +441,7 @@ async function loadAnalysis(): Promise<AnalysisResult | null> {
         await browser.tabs.sendMessage(tabId, { type: 'TRIGGER_ANALYSIS' });
         
         // If successful, just poll
-        showLoading('Analyzing website... This may take a few seconds.');
+        showLoading('Analyzing website...');
         startPolling();
       } catch {
         // Content script not responding - reload the page

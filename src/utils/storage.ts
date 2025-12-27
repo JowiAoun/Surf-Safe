@@ -1,5 +1,6 @@
 import browser from 'webextension-polyfill';
 import { ApiConfig, StorageKey, CachedAnalysis, ExtensionSettings, SensitivityLevel } from '@/types';
+import { CACHE_TTL_24H, cacheStats, generateCacheKey, getDomainFromCacheKey } from '@/utils/cache';
 
 /**
  * Default extension settings
@@ -79,46 +80,153 @@ export async function removeWhitelistedDomain(domain: string): Promise<void> {
 }
 
 /**
- * Get cached analysis for a URL
+ * Get the entire cache map
+ */
+async function getCacheMap(): Promise<Record<string, CachedAnalysis>> {
+  const result = await browser.storage.local.get(StorageKey.ANALYSIS_CACHE);
+  return (result[StorageKey.ANALYSIS_CACHE] as Record<string, CachedAnalysis>) || {};
+}
+
+/**
+ * Save the entire cache map
+ */
+async function saveCacheMap(cache: Record<string, CachedAnalysis>): Promise<void> {
+  await browser.storage.local.set({ [StorageKey.ANALYSIS_CACHE]: cache });
+  cacheStats.updateSize(Object.keys(cache).length);
+}
+
+/**
+ * Get cached analysis for a URL (exact match)
  */
 export async function getCachedAnalysis(url: string): Promise<CachedAnalysis | null> {
-  const result = await browser.storage.local.get(StorageKey.ANALYSIS_CACHE);
-  const cache: Record<string, CachedAnalysis> = (result[StorageKey.ANALYSIS_CACHE] as Record<string, CachedAnalysis>) || {};
+  const cache = await getCacheMap();
 
   const cached = cache[url];
   if (cached && cached.expiresAt > Date.now()) {
+    cacheStats.recordHit();
     return cached;
   }
 
+  cacheStats.recordMiss();
   return null;
 }
 
 /**
- * Save analysis result to cache
+ * Get cached analysis by cache key (domain + content hash)
+ */
+export async function getCachedAnalysisByKey(cacheKey: string): Promise<CachedAnalysis | null> {
+  const cache = await getCacheMap();
+
+  const cached = cache[cacheKey];
+  if (cached && cached.expiresAt > Date.now()) {
+    cacheStats.recordHit();
+    return cached;
+  }
+
+  cacheStats.recordMiss();
+  return null;
+}
+
+/**
+ * Get cached analysis for a domain (returns any valid cached result)
+ */
+export async function getCachedAnalysisByDomain(domain: string): Promise<CachedAnalysis | null> {
+  const cache = await getCacheMap();
+  const normalizedDomain = domain.toLowerCase().replace(/^www\./, '');
+
+  for (const [key, cached] of Object.entries(cache)) {
+    const keyDomain = getDomainFromCacheKey(key);
+    if (keyDomain === normalizedDomain && cached.expiresAt > Date.now()) {
+      cacheStats.recordHit();
+      return cached;
+    }
+  }
+
+  cacheStats.recordMiss();
+  return null;
+}
+
+/**
+ * Save analysis result to cache with 24-hour TTL
  */
 export async function saveCachedAnalysis(cached: CachedAnalysis): Promise<void> {
-  const result = await browser.storage.local.get(StorageKey.ANALYSIS_CACHE);
-  const cache: Record<string, CachedAnalysis> = (result[StorageKey.ANALYSIS_CACHE] as Record<string, CachedAnalysis>) || {};
-
+  const cache = await getCacheMap();
   cache[cached.url] = cached;
-  await browser.storage.local.set({ [StorageKey.ANALYSIS_CACHE]: cache });
+  await saveCacheMap(cache);
+}
+
+/**
+ * Save analysis with domain+content hash key for smarter caching
+ */
+export async function saveCachedAnalysisWithKey(
+  cacheKey: string,
+  url: string,
+  result: CachedAnalysis['result']
+): Promise<void> {
+  const cache = await getCacheMap();
+  cache[cacheKey] = {
+    url,
+    result,
+    expiresAt: Date.now() + CACHE_TTL_24H,
+  };
+  await saveCacheMap(cache);
+}
+
+/**
+ * Clear cache for a specific domain
+ */
+export async function clearCacheForDomain(domain: string): Promise<number> {
+  const cache = await getCacheMap();
+  const normalizedDomain = domain.toLowerCase().replace(/^www\./, '');
+  let cleared = 0;
+
+  const newCache: Record<string, CachedAnalysis> = {};
+  for (const [key, cached] of Object.entries(cache)) {
+    const keyDomain = getDomainFromCacheKey(key);
+    if (keyDomain !== normalizedDomain) {
+      newCache[key] = cached;
+    } else {
+      cleared++;
+    }
+  }
+
+  await saveCacheMap(newCache);
+  return cleared;
+}
+
+/**
+ * Clear all cache
+ */
+export async function clearAllCache(): Promise<void> {
+  await browser.storage.local.remove(StorageKey.ANALYSIS_CACHE);
+  cacheStats.updateSize(0);
 }
 
 /**
  * Clear expired cache entries
  */
-export async function clearExpiredCache(): Promise<void> {
-  const result = await browser.storage.local.get(StorageKey.ANALYSIS_CACHE);
-  const cache: Record<string, CachedAnalysis> = (result[StorageKey.ANALYSIS_CACHE] as Record<string, CachedAnalysis>) || {};
-
+export async function clearExpiredCache(): Promise<number> {
+  const cache = await getCacheMap();
   const now = Date.now();
   const validCache: Record<string, CachedAnalysis> = {};
+  let cleared = 0;
 
-  for (const [url, cached] of Object.entries(cache)) {
+  for (const [key, cached] of Object.entries(cache)) {
     if (cached.expiresAt > now) {
-      validCache[url] = cached;
+      validCache[key] = cached;
+    } else {
+      cleared++;
     }
   }
 
-  await browser.storage.local.set({ [StorageKey.ANALYSIS_CACHE]: validCache });
+  await saveCacheMap(validCache);
+  return cleared;
+}
+
+/**
+ * Get cache size
+ */
+export async function getCacheSize(): Promise<number> {
+  const cache = await getCacheMap();
+  return Object.keys(cache).length;
 }

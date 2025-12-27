@@ -1,13 +1,17 @@
 import browser from 'webextension-polyfill';
 import { Message, MessageType, PageAnalysisRequest, AnalysisResult, RiskLevel, SENSITIVITY_THRESHOLDS } from '@/types';
-import { getApiConfig, getCachedAnalysis, saveCachedAnalysis, clearExpiredCache, isWhitelistedDomain, getExtensionSettings } from '@/utils/storage';
+import { getApiConfig, getCachedAnalysis, saveCachedAnalysis, clearExpiredCache, isWhitelistedDomain, getExtensionSettings, clearCacheForDomain, clearAllCache } from '@/utils/storage';
 import { createApiClient } from '@/utils/api';
 import { addMessageListener } from '@/utils/messaging';
+import { CACHE_TTL_24H, cacheStats, generateCacheKey } from '@/utils/cache';
 
 console.log('SurfSafe background service worker loaded');
 
 // Store current analysis results per tab
 const tabAnalysisResults = new Map<number, AnalysisResult>();
+
+// Track pending analyses to prevent duplicates
+const pendingAnalyses = new Set<string>();
 
 /**
  * Handle messages from content scripts and popup
@@ -22,11 +26,32 @@ addMessageListener(async (message: Message, sender) => {
     case MessageType.GET_CURRENT_ANALYSIS:
       return handleGetCurrentAnalysis(sender.tab?.id);
 
+    case MessageType.CLEAR_CACHE:
+      return handleClearCache(message.payload?.domain);
+
+    case MessageType.GET_CACHE_STATS:
+      return cacheStats.getStats();
+
     default:
       console.warn('Unknown message type:', message.type);
       return null;
   }
 });
+
+/**
+ * Handle cache clear request
+ */
+async function handleClearCache(domain?: string): Promise<{ cleared: number }> {
+  if (domain) {
+    const cleared = await clearCacheForDomain(domain);
+    console.log(`Cleared ${cleared} cache entries for domain:`, domain);
+    return { cleared };
+  } else {
+    await clearAllCache();
+    console.log('Cleared all cache entries');
+    return { cleared: -1 }; // -1 indicates all cleared
+  }
+}
 
 /**
  * Handle page analysis request
@@ -35,9 +60,17 @@ async function handleAnalyzePage(
   request: PageAnalysisRequest,
   tabId?: number
 ): Promise<AnalysisResult | { error: string } | { whitelisted: true }> {
+  const domain = request.domain || new URL(request.url).hostname;
+  
+  // Prevent duplicate pending requests
+  const requestKey = `${domain}:${tabId}`;
+  if (pendingAnalyses.has(requestKey)) {
+    console.log('Analysis already pending for:', requestKey);
+    return { error: 'Analysis already in progress' };
+  }
+
   try {
     // Check if domain is whitelisted
-    const domain = request.domain || new URL(request.url).hostname;
     if (await isWhitelistedDomain(domain)) {
       console.log('Domain is whitelisted, skipping analysis:', domain);
       const whitelistedResult: AnalysisResult = {
@@ -53,15 +86,21 @@ async function handleAnalyzePage(
       return whitelistedResult;
     }
 
-    // Check cache first
+    // Generate cache key using domain + content hash
+    const cacheKey = generateCacheKey(domain, request.bodyText || '');
+
+    // Check cache first (using URL for backward compatibility)
     const cached = await getCachedAnalysis(request.url);
     if (cached) {
-      console.log('Returning cached analysis for:', request.url);
+      console.log('Cache HIT for:', request.url);
       if (tabId) {
         tabAnalysisResults.set(tabId, cached.result);
       }
       return cached.result;
     }
+
+    // Mark as pending
+    pendingAnalyses.add(requestKey);
 
     // Get API configuration
     const config = await getApiConfig();
@@ -74,7 +113,7 @@ async function handleAnalyzePage(
       throw new Error('Incomplete API configuration. Please check extension options.');
     }
 
-    console.log('Analyzing page:', request.url);
+    console.log('Cache MISS - Analyzing page:', request.url);
 
     // Create API client and analyze
     const apiClient = createApiClient(config);
@@ -86,7 +125,6 @@ async function handleAnalyzePage(
     
     // Filter out low-confidence threats based on sensitivity
     if (result.confidence < threshold && result.riskLevel !== RiskLevel.CRITICAL) {
-      // For low-confidence results on non-critical sites, adjust risk level
       result = {
         ...result,
         threats: result.threats.filter(() => result.confidence >= threshold),
@@ -96,11 +134,11 @@ async function handleAnalyzePage(
 
     console.log('Analysis complete:', result);
 
-    // Cache the result (expires in 1 hour)
+    // Cache the result with 24-hour TTL
     await saveCachedAnalysis({
       url: request.url,
       result,
-      expiresAt: Date.now() + 60 * 60 * 1000,
+      expiresAt: Date.now() + CACHE_TTL_24H,
     });
 
     // Store in tab results
@@ -114,6 +152,9 @@ async function handleAnalyzePage(
     return {
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
+  } finally {
+    // Always remove from pending
+    pendingAnalyses.delete(requestKey);
   }
 }
 
@@ -138,10 +179,15 @@ browser.tabs.onRemoved.addListener((tabId) => {
 /**
  * Clear expired cache periodically (every hour)
  */
-setInterval(() => {
-  clearExpiredCache().catch((error) => {
+setInterval(async () => {
+  try {
+    const cleared = await clearExpiredCache();
+    if (cleared > 0) {
+      console.log(`Cleared ${cleared} expired cache entries`);
+    }
+  } catch (error) {
     console.error('Failed to clear expired cache:', error);
-  });
+  }
 }, 60 * 60 * 1000);
 
 /**

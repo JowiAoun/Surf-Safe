@@ -1,5 +1,6 @@
 import { MessageType, PageAnalysisRequest, AnalysisResult } from '@/types';
 import { sendToBackground, createMessage } from '@/utils/messaging';
+import { debounce, DEBOUNCE_DELAY_MS } from '@/utils/cache';
 
 console.log('SurfSafe content script loaded on:', window.location.href);
 
@@ -8,6 +9,10 @@ const MAX_BODY_TEXT_LENGTH = 10000;
 const MAX_LINKS = 100;
 const MAX_HEADINGS = 50;
 const MAX_FORMS = 20;
+
+// Track last analyzed URL to prevent duplicate analysis
+let lastAnalyzedUrl: string | null = null;
+let isAnalyzing = false;
 
 /**
  * Check if an element is visible in the DOM
@@ -107,7 +112,6 @@ function detectSuspiciousUrlPatterns(url: string): string[] {
   try {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname;
-    const pathname = urlObj.pathname;
     const fullUrl = urlObj.href;
 
     // Check for excessive hyphens in domain (common in phishing)
@@ -312,10 +316,24 @@ function extractPageData(): PageAnalysisRequest {
 }
 
 /**
- * Analyze the current page
+ * Analyze the current page (core function)
  */
-async function analyzePage(): Promise<void> {
+async function performAnalysis(): Promise<void> {
+  const currentUrl = window.location.href;
+
+  // Skip if already analyzing or same URL
+  if (isAnalyzing) {
+    console.log('Analysis already in progress, skipping');
+    return;
+  }
+
+  if (lastAnalyzedUrl === currentUrl) {
+    console.log('URL already analyzed, skipping:', currentUrl);
+    return;
+  }
+
   try {
+    isAnalyzing = true;
     console.log('Extracting page data...');
     const pageData = extractPageData();
 
@@ -327,11 +345,35 @@ async function analyzePage(): Promise<void> {
       console.error('Analysis failed:', result.error);
     } else {
       console.log('Analysis result:', result);
+      lastAnalyzedUrl = currentUrl;
       // Store result for popup to retrieve
       sessionStorage.setItem('surfsafe-analysis', JSON.stringify(result));
     }
   } catch (error) {
     console.error('Failed to analyze page:', error);
+  } finally {
+    isAnalyzing = false;
+  }
+}
+
+// Debounced version of analysis to prevent rapid-fire requests
+const debouncedAnalysis = debounce(performAnalysis, DEBOUNCE_DELAY_MS);
+
+/**
+ * Trigger analysis (debounced)
+ */
+function analyzePage(): void {
+  debouncedAnalysis();
+}
+
+/**
+ * Handle URL changes (for SPA support)
+ */
+function handleUrlChange(): void {
+  const currentUrl = window.location.href;
+  if (currentUrl !== lastAnalyzedUrl) {
+    console.log('URL changed, scheduling analysis:', currentUrl);
+    analyzePage();
   }
 }
 
@@ -349,7 +391,25 @@ function init(): void {
     // Page already loaded
     setTimeout(analyzePage, 2000);
   }
+
+  // Listen for SPA navigation (history API)
+  window.addEventListener('popstate', handleUrlChange);
+
+  // Observe URL changes via History API
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function(...args) {
+    originalPushState.apply(this, args);
+    setTimeout(handleUrlChange, 500);
+  };
+
+  history.replaceState = function(...args) {
+    originalReplaceState.apply(this, args);
+    setTimeout(handleUrlChange, 500);
+  };
 }
 
 // Start the content script
 init();
+

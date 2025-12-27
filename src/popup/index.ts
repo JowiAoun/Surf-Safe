@@ -136,7 +136,7 @@ async function getCurrentTheme(): Promise<Theme> {
  * Apply theme to the UI
  */
 function applyTheme(theme: Theme): void {
-  containerEl.setAttribute('data-theme', theme);
+  document.body.setAttribute('data-theme', theme);
   themeIconEl.textContent = theme === 'dark' ? '☀️' : '🌙';
 }
 
@@ -144,7 +144,7 @@ function applyTheme(theme: Theme): void {
  * Toggle theme and persist
  */
 async function toggleTheme(): Promise<void> {
-  const currentTheme = containerEl.getAttribute('data-theme') as Theme;
+  const currentTheme = document.body.getAttribute('data-theme') as Theme || 'light';
   const newTheme: Theme = currentTheme === 'dark' ? 'light' : 'dark';
   
   applyTheme(newTheme);

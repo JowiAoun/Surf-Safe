@@ -225,6 +225,25 @@ function renderThreats(threats: ThreatLabel[]): void {
 }
 
 /**
+ * Update surf character image based on score
+ */
+function updateSurfCharacter(score: number): void {
+  const charImg = document.getElementById('surf-character') as HTMLImageElement;
+  if (!charImg) return;
+
+  if (score >= 80) {
+    charImg.src = '../../assets/surf_good.png';
+    charImg.alt = 'Smooth Surfing';
+  } else if (score >= 50) {
+    charImg.src = '../../assets/surf_fine.png';
+    charImg.alt = 'Choppy Waters';
+  } else {
+    charImg.src = '../../assets/surf_bad.png';
+    charImg.alt = 'Rough Seals / Shark';
+  }
+}
+
+/**
  * Display analysis results
  */
 function displayResults(result: AnalysisResult): void {
@@ -236,6 +255,7 @@ function displayResults(result: AnalysisResult): void {
   // Calculate and display safety score
   const safetyScore = calculateSafetyScore(result);
   updateGauge(safetyScore);
+  updateSurfCharacter(safetyScore);
 
   // Display risk level
   riskLevelEl.textContent = result.riskLevel;

@@ -1,54 +1,56 @@
 /* CSS Custom Properties for Theme Support */
 :root {
   /* Light theme (default) */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-tertiary: #fafafa;
-  --text-primary: #333333;
-  --text-secondary: #555555;
-  --text-muted: #888888;
-  --border-color: #e0e0e0;
-  --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --accent-color: #667eea;
-  --accent-hover: #5568d3;
+  --bg-primary: hsl(190, 59%, 95%);
+  --bg-secondary: hsl(190, 59%, 90%);
+  --bg-tertiary: hsl(190, 59%, 92%); /* Slightly different for contrast */
+  --text-primary: hsl(235, 49%, 22%);
+  --text-secondary: hsl(235, 49%, 35%); /* Lighter version of deep ocean */
+  --text-muted: hsl(235, 30%, 50%);
+  --border-color: hsl(194, 66%, 80%);
   
-  /* Risk colors */
-  --safe-bg: #e8f5e9;
-  --safe-color: #2e7d32;
-  --low-bg: #fff8e1;
-  --low-color: #f9a825;
-  --medium-bg: #fff3e0;
-  --medium-color: #f57c00;
-  --high-bg: #ffebee;
-  --high-color: #c62828;
-  --critical-bg: #ffebee;
-  --critical-color: #b71c1c;
+  /* Surf Accents */
+  --accent-gradient: linear-gradient(135deg, hsl(194, 66%, 36%) 0%, hsl(190, 55%, 49%) 100%);
+  --accent-color: hsl(194, 66%, 36%);
+  --accent-hover: hsl(190, 55%, 49%);
+  
+  /* Risk colors (Surf-themed) */
+  --safe-bg: hsl(141, 28%, 90%);
+  --safe-color: hsl(141, 60%, 35%); /* Darker than leaf for text */
+  --low-bg: hsl(40, 100%, 92%);
+  --low-color: hsl(35, 90%, 35%); /* Darker than gold for text */
+  --medium-bg: hsl(22, 90%, 92%);
+  --medium-color: hsl(22, 90%, 45%); /* Darker than sunset */
+  --high-bg: hsl(0, 70%, 92%);
+  --high-color: hsl(0, 80%, 40%);
+  --critical-bg: hsl(0, 90%, 95%);
+  --critical-color: hsl(0, 100%, 30%);
   
   /* Gauge colors */
-  --gauge-safe: #4caf50;
-  --gauge-low: #ffeb3b;
-  --gauge-medium: #ff9800;
-  --gauge-high: #f44336;
-  --gauge-critical: #b71c1c;
-  --gauge-bg: #e0e0e0;
+  --gauge-safe: hsl(141, 28%, 51%); /* Palm Leaf */
+  --gauge-low: hsl(40, 100%, 55%); /* Sun Gold */
+  --gauge-medium: hsl(22, 90%, 57%); /* Sunset Orange */
+  --gauge-high: hsl(0, 80%, 55%);
+  --gauge-critical: hsl(0, 90%, 45%);
+  --gauge-bg: hsl(190, 20%, 80%);
 }
 
 [data-theme="dark"] {
-  --bg-primary: #1e1e2e;
-  --bg-secondary: #2a2a3e;
-  --bg-tertiary: #252535;
-  --text-primary: #e0e0e0;
-  --text-secondary: #b0b0b0;
-  --text-muted: #808080;
-  --border-color: #404050;
+  --bg-primary: hsl(235, 49%, 22%); /* Deep Ocean */
+  --bg-secondary: hsl(235, 49%, 18%); /* Darker Ocean */
+  --bg-tertiary: hsl(235, 49%, 25%); /* Lighter Ocean */
+  --text-primary: hsl(190, 59%, 95%); /* Foam */
+  --text-secondary: hsl(190, 40%, 80%);
+  --text-muted: hsl(190, 30%, 70%);
+  --border-color: hsl(235, 40%, 35%);
   
   /* Adjusted risk colors for dark theme */
-  --safe-bg: #1a3d1f;
-  --low-bg: #3d3a1a;
-  --medium-bg: #3d2e1a;
-  --high-bg: #3d1a1a;
-  --critical-bg: #4d1a1a;
-  --gauge-bg: #404050;
+  --safe-bg: hsl(141, 30%, 20%);
+  --low-bg: hsl(40, 40%, 20%);
+  --medium-bg: hsl(22, 40%, 20%);
+  --high-bg: hsl(0, 40%, 20%);
+  --critical-bg: hsl(0, 50%, 25%);
+  --gauge-bg: hsl(235, 40%, 35%);
 }
 
 * {
@@ -90,8 +92,22 @@ header {
   position: relative;
 }
 
+/* Surf Character */
+.surf-character-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.surf-character {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+}
+
 header h1 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
 }
 

@@ -1,33 +1,34 @@
 /* CSS Custom Properties for Theme Support */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-tertiary: #fafafa;
-  --text-primary: #333333;
-  --text-secondary: #555555;
-  --text-muted: #999999;
-  --border-color: #e0e0e0;
-  --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --accent-color: #667eea;
-  --accent-hover: #5568d3;
-  --success-bg: #e8f5e9;
-  --success-color: #2e7d32;
-  --error-bg: #ffebee;
-  --error-color: #c62828;
-  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* Light theme (default) */
+  --bg-primary: hsl(190, 59%, 95%);
+  --bg-secondary: hsl(190, 59%, 90%);
+  --bg-tertiary: hsl(190, 59%, 92%);
+  --text-primary: hsl(235, 49%, 22%);
+  --text-secondary: hsl(235, 49%, 35%);
+  --text-muted: hsl(235, 30%, 50%);
+  --border-color: hsl(194, 66%, 80%);
+  --accent-gradient: linear-gradient(135deg, hsl(194, 66%, 36%) 0%, hsl(190, 55%, 49%) 100%);
+  --accent-color: hsl(194, 66%, 36%);
+  --accent-hover: hsl(190, 55%, 49%);
+  --success-bg: hsl(141, 28%, 90%);
+  --success-color: hsl(141, 60%, 35%);
+  --error-bg: hsl(0, 70%, 92%);
+  --error-color: hsl(0, 80%, 40%);
+  --card-shadow: 0 4px 12px rgba(30, 41, 59, 0.1);
 }
 
 [data-theme="dark"] {
-  --bg-primary: #1e1e2e;
-  --bg-secondary: #181825;
-  --bg-tertiary: #252535;
-  --text-primary: #e0e0e0;
-  --text-secondary: #b0b0b0;
-  --text-muted: #707070;
-  --border-color: #404050;
-  --success-bg: #1a3d1f;
-  --error-bg: #3d1a1a;
-  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --bg-primary: hsl(235, 49%, 22%);
+  --bg-secondary: hsl(235, 49%, 18%);
+  --bg-tertiary: hsl(235, 49%, 25%);
+  --text-primary: hsl(190, 59%, 95%);
+  --text-secondary: hsl(190, 40%, 80%);
+  --text-muted: hsl(190, 30%, 70%);
+  --border-color: hsl(235, 40%, 35%);
+  --success-bg: hsl(141, 30%, 20%);
+  --error-bg: hsl(0, 40%, 20%);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 * {

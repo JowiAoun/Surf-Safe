@@ -10,18 +10,21 @@
     <div class="container" data-theme="light">
       <header>
         <div class="header-content">
+          <div class="surf-character-container">
+            <img id="surf-character" src="../../assets/surf_fine.png" alt="Surf Character" class="surf-character" />
+          </div>
           <h1>🛡️ SurfSafe</h1>
           <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
             <span class="theme-icon">🌙</span>
           </button>
         </div>
-        <p class="subtitle">AI-Powered Scam Detection</p>
+        <p class="subtitle">AI-Powered Surf Guard</p>
         <p id="current-domain" class="domain-display"></p>
       </header>
 
       <div id="loading" class="loading">
         <div class="spinner"></div>
-        <p>Analyzing website...</p>
+        <p>Scouting the waters...</p>
       </div>
 
       <div id="error" class="error hidden">
@@ -59,7 +62,7 @@
           </svg>
           <div class="gauge-center">
             <span id="safety-score" class="score-value">--</span>
-            <span class="score-label">Safety</span>
+            <span class="score-label">Conditions</span>
           </div>
         </div>
 
@@ -70,7 +73,7 @@
 
         <!-- Confidence -->
         <div class="section">
-          <h3>Analysis Confidence</h3>
+          <h3>Forecast Confidence</h3>
           <div class="confidence-bar">
             <div id="confidence-fill" class="confidence-fill"></div>
           </div>
@@ -79,9 +82,9 @@
 
         <!-- Threat Indicators -->
         <div class="section">
-          <h3>Threat Indicators</h3>
+          <h3>Hazards Detected</h3>
           <div id="threats-list" class="threats-list">
-            <p class="no-threats">✅ No threats detected</p>
+            <p class="no-threats">🌊 Clear waters ahead</p>
           </div>
         </div>
 
@@ -116,7 +119,7 @@
       </div>
 
       <footer>
-        <button id="export-btn" class="btn btn-secondary">📋 Export Report</button>
+        <button id="export-btn" class="btn btn-secondary">📋 Surf Report</button>
         <button id="reanalyze-btn" class="btn btn-secondary">🔄 Re-analyze</button>
         <button id="options-btn" class="btn btn-link">⚙️ Settings</button>
       </footer>

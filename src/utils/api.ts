@@ -170,7 +170,7 @@ export class LLMApiClient {
                 },
               ],
               temperature: 0.3,
-              max_tokens: 500,
+              max_tokens: 1000,
             }),
             signal: controller.signal,
           });
@@ -252,7 +252,31 @@ export class LLMApiClient {
             );
           }
           
-          const content = data.choices?.[0]?.message?.content;
+          // Get content from response
+          const message = data.choices?.[0]?.message;
+          const content = message?.content;
+          
+          // Detect reasoning models - they put content in 'reasoning' instead of 'content'
+          // These models are not compatible with SurfSafe
+          if (!content && message?.reasoning) {
+            throw new ApiError(
+              `Reasoning models are not supported. The model "${data.model || 'unknown'}" ` +
+              `outputs reasoning instead of structured JSON. Please use a standard chat model: ` +
+              `openai/gpt-4o-mini, openai/gpt-3.5-turbo, or anthropic/claude-3-haiku`,
+              ApiErrorType.INVALID_RESPONSE,
+              { retryable: false }
+            );
+          }
+          
+          // Check if response was cut off due to token limit
+          const finishReason = data.choices?.[0]?.finish_reason;
+          if (finishReason === 'length' && !content) {
+            throw new ApiError(
+              `Model response was cut off (max_tokens limit reached). ` +
+              `Try a different model or the response was too long.`,
+              ApiErrorType.INVALID_RESPONSE
+            );
+          }
 
           if (!content) {
             // Log what we got to help debug

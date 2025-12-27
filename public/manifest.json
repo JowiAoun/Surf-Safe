@@ -12,6 +12,9 @@
     "http://*/*",
     "https://*/*"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'"
+  },
   "background": {
     "service_worker": "src/background/index.ts",
     "type": "module"
@@ -38,3 +41,4 @@
     "128": "assets/icons/icon128.png"
   }
 }
+

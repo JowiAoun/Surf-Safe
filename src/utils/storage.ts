@@ -59,9 +59,18 @@ export async function isWhitelistedDomain(domain: string): Promise<boolean> {
  */
 export async function addWhitelistedDomain(domain: string): Promise<void> {
   const settings = await getExtensionSettings();
-  const normalizedDomain = domain.toLowerCase().replace(/^www\./, '').replace(/^https?:\/\//, '').split('/')[0];
   
-  if (!settings.whitelistedDomains.includes(normalizedDomain)) {
+  // Sanitize and normalize domain
+  let normalizedDomain = domain.toLowerCase().trim();
+  normalizedDomain = normalizedDomain.replace(/^https?:\/\//i, '');
+  normalizedDomain = normalizedDomain.replace(/^www\./i, '');
+  normalizedDomain = normalizedDomain.split('/')[0];
+  normalizedDomain = normalizedDomain.split('?')[0];
+  
+  // Only allow valid domain characters
+  normalizedDomain = normalizedDomain.replace(/[^a-z0-9.-]/g, '');
+  
+  if (normalizedDomain && !settings.whitelistedDomains.includes(normalizedDomain)) {
     settings.whitelistedDomains.push(normalizedDomain);
     await saveExtensionSettings(settings);
   }

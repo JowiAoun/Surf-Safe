@@ -333,7 +333,9 @@ function showLoading(message: string = 'Analyzing website...'): void {
  * Polling interval for checking analysis status
  */
 let pollingInterval: number | null = null;
+let pollingStartTime: number | null = null;
 let currentTabId: number | null = null;
+const POLLING_TIMEOUT_MS = 15000; // Stop polling after 15 seconds
 
 /**
  * Start polling for analysis completion
@@ -341,8 +343,17 @@ let currentTabId: number | null = null;
 function startPolling(): void {
   if (pollingInterval) return; // Already polling
   
+  pollingStartTime = Date.now();
+  
   pollingInterval = window.setInterval(async () => {
     if (!currentTabId) return;
+    
+    // Check for timeout
+    if (pollingStartTime && Date.now() - pollingStartTime > POLLING_TIMEOUT_MS) {
+      stopPolling();
+      displayError('Analysis is taking longer than expected. Try re-analyzing the page.');
+      return;
+    }
     
     try {
       const message = createMessage(MessageType.GET_CURRENT_ANALYSIS, { tabId: currentTabId });
@@ -367,6 +378,7 @@ function stopPolling(): void {
     clearInterval(pollingInterval);
     pollingInterval = null;
   }
+  pollingStartTime = null;
 }
 
 /**

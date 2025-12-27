@@ -7,10 +7,16 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="container">
+    <div class="container" data-theme="light">
       <header>
-        <h1>🛡️ SurfSafe</h1>
+        <div class="header-content">
+          <h1>🛡️ SurfSafe</h1>
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+            <span class="theme-icon">🌙</span>
+          </button>
+        </div>
         <p class="subtitle">AI-Powered Scam Detection</p>
+        <p id="current-domain" class="domain-display"></p>
       </header>
 
       <div id="loading" class="loading">
@@ -19,33 +25,75 @@
       </div>
 
       <div id="error" class="error hidden">
+        <div class="error-icon">⚠️</div>
         <p id="error-message"></p>
+        <p id="error-hint" class="error-hint"></p>
         <button id="configure-btn" class="btn btn-primary">Configure API</button>
       </div>
 
       <div id="results" class="results hidden">
+        <!-- Safety Gauge -->
+        <div class="safety-gauge-container">
+          <svg class="safety-gauge" viewBox="0 0 120 120">
+            <circle
+              class="gauge-bg"
+              cx="60"
+              cy="60"
+              r="52"
+              fill="none"
+              stroke-width="12"
+            />
+            <circle
+              id="gauge-fill"
+              class="gauge-fill"
+              cx="60"
+              cy="60"
+              r="52"
+              fill="none"
+              stroke-width="12"
+              stroke-linecap="round"
+              stroke-dasharray="327"
+              stroke-dashoffset="327"
+              transform="rotate(-90 60 60)"
+            />
+          </svg>
+          <div class="gauge-center">
+            <span id="safety-score" class="score-value">--</span>
+            <span class="score-label">Safety</span>
+          </div>
+        </div>
+
+        <!-- Risk Badge -->
         <div id="risk-badge" class="risk-badge">
           <span id="risk-level">SAFE</span>
         </div>
 
+        <!-- Confidence -->
         <div class="section">
-          <h3>Confidence</h3>
+          <h3>Analysis Confidence</h3>
           <div class="confidence-bar">
             <div id="confidence-fill" class="confidence-fill"></div>
           </div>
           <p id="confidence-text" class="confidence-text">0%</p>
         </div>
 
+        <!-- Threat Indicators -->
         <div class="section">
           <h3>Threat Indicators</h3>
           <div id="threats-list" class="threats-list">
-            <p class="no-threats">No threats detected</p>
+            <p class="no-threats">✅ No threats detected</p>
           </div>
         </div>
 
+        <!-- Expandable Analysis Details -->
         <div class="section">
-          <h3>Analysis</h3>
-          <p id="explanation" class="explanation"></p>
+          <button id="details-toggle" class="details-toggle" aria-expanded="false">
+            <span>Why this rating?</span>
+            <span class="toggle-icon">▼</span>
+          </button>
+          <div id="details-content" class="details-content collapsed">
+            <p id="explanation" class="explanation"></p>
+          </div>
         </div>
 
         <div class="timestamp">
@@ -54,8 +102,8 @@
       </div>
 
       <footer>
-        <button id="reanalyze-btn" class="btn btn-secondary">Re-analyze</button>
-        <button id="options-btn" class="btn btn-link">Settings</button>
+        <button id="reanalyze-btn" class="btn btn-secondary">🔄 Re-analyze</button>
+        <button id="options-btn" class="btn btn-link">⚙️ Settings</button>
       </footer>
     </div>
 

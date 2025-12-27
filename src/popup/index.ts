@@ -1,6 +1,7 @@
 import browser from 'webextension-polyfill';
-import { MessageType, AnalysisResult, RiskLevel, ThreatLabel } from '@/types';
+import { MessageType, AnalysisResult, RiskLevel, ThreatLabel, FeedbackType, UserFeedback } from '@/types';
 import { sendToBackground, createMessage } from '@/utils/messaging';
+import { saveUserFeedback, generateExportReport } from '@/utils/storage';
 
 // ============================================================================
 // DOM Elements
@@ -29,6 +30,21 @@ const detailsContentEl = document.getElementById('details-content')!;
 const gaugeFillEl = document.getElementById('gauge-fill')!;
 const safetyScoreEl = document.getElementById('safety-score')!;
 const domainDisplayEl = document.getElementById('current-domain')!;
+
+// Feedback UI elements
+const feedbackAccurateBtn = document.getElementById('feedback-accurate') as HTMLButtonElement;
+const feedbackReportBtn = document.getElementById('feedback-report') as HTMLButtonElement;
+const feedbackStatusEl = document.getElementById('feedback-status')!;
+const feedbackModal = document.getElementById('feedback-modal')!;
+const feedbackCancelBtn = document.getElementById('feedback-cancel')!;
+const feedbackSubmitBtn = document.getElementById('feedback-submit')!;
+const feedbackCommentEl = document.getElementById('feedback-comment') as HTMLTextAreaElement;
+const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
+
+// Store current analysis for feedback
+let currentAnalysis: AnalysisResult | null = null;
+let currentUrl = '';
+let currentDomain = '';
 
 // ============================================================================
 // Threat Icons Mapping
@@ -302,7 +318,7 @@ async function displayCurrentDomain(): Promise<void> {
 /**
  * Load current analysis
  */
-async function loadAnalysis(): Promise<void> {
+async function loadAnalysis(): Promise<AnalysisResult | null> {
   try {
     // Show loading
     loadingEl.classList.remove('hidden');
@@ -315,12 +331,15 @@ async function loadAnalysis(): Promise<void> {
 
     if (result) {
       displayResults(result);
+      return result;
     } else {
       displayError('No analysis available yet. Please wait for the page to be analyzed.');
+      return null;
     }
   } catch (error) {
     console.error('Failed to load analysis:', error);
     displayError(error instanceof Error ? error.message : 'Failed to load analysis');
+    return null;
   }
 }
 
@@ -364,6 +383,101 @@ function toggleDetails(): void {
 }
 
 // ============================================================================
+// Feedback Functions
+// ============================================================================
+
+/**
+ * Open feedback modal
+ */
+function openFeedbackModal(): void {
+  feedbackModal.classList.remove('hidden');
+}
+
+/**
+ * Close feedback modal
+ */
+function closeFeedbackModal(): void {
+  feedbackModal.classList.add('hidden');
+  feedbackCommentEl.value = '';
+}
+
+/**
+ * Submit accurate feedback
+ */
+async function submitAccurateFeedback(): Promise<void> {
+  if (!currentAnalysis) return;
+  
+  const feedback: UserFeedback = {
+    id: crypto.randomUUID(),
+    url: currentUrl,
+    domain: currentDomain,
+    feedbackType: FeedbackType.ACCURATE,
+    originalRiskLevel: currentAnalysis.riskLevel,
+    timestamp: Date.now(),
+  };
+  
+  await saveUserFeedback(feedback);
+  feedbackStatusEl.textContent = '✓ Thanks for your feedback!';
+  feedbackAccurateBtn.disabled = true;
+  feedbackReportBtn.disabled = true;
+}
+
+/**
+ * Submit issue report
+ */
+async function submitFeedbackReport(): Promise<void> {
+  if (!currentAnalysis) return;
+  
+  const feedbackTypeEl = document.querySelector('input[name="feedback-type"]:checked') as HTMLInputElement;
+  const feedbackType = feedbackTypeEl?.value === 'FALSE_NEGATIVE' 
+    ? FeedbackType.FALSE_NEGATIVE 
+    : FeedbackType.FALSE_POSITIVE;
+  
+  const feedback: UserFeedback = {
+    id: crypto.randomUUID(),
+    url: currentUrl,
+    domain: currentDomain,
+    feedbackType,
+    originalRiskLevel: currentAnalysis.riskLevel,
+    userComment: feedbackCommentEl.value || undefined,
+    timestamp: Date.now(),
+  };
+  
+  await saveUserFeedback(feedback);
+  closeFeedbackModal();
+  feedbackStatusEl.textContent = '✓ Report submitted. Thank you!';
+  feedbackAccurateBtn.disabled = true;
+  feedbackReportBtn.disabled = true;
+}
+
+/**
+ * Export report to clipboard
+ */
+async function exportReport(): Promise<void> {
+  if (!currentAnalysis) return;
+  
+  const report = generateExportReport(
+    currentUrl,
+    currentDomain,
+    currentAnalysis.riskLevel,
+    currentAnalysis.threats,
+    currentAnalysis.explanation,
+    currentAnalysis.timestamp
+  );
+  
+  try {
+    await navigator.clipboard.writeText(report);
+    exportBtn.textContent = '✓ Copied!';
+    setTimeout(() => {
+      exportBtn.textContent = '📋 Export Report';
+    }, 2000);
+  } catch {
+    // Fallback: show alert
+    alert('Report:\n\n' + report);
+  }
+}
+
+// ============================================================================
 // Event Listeners
 // ============================================================================
 
@@ -372,6 +486,16 @@ configureBtn.addEventListener('click', openOptions);
 optionsBtn.addEventListener('click', openOptions);
 themeToggleBtn.addEventListener('click', toggleTheme);
 detailsToggleBtn.addEventListener('click', toggleDetails);
+
+// Feedback event listeners
+feedbackAccurateBtn.addEventListener('click', submitAccurateFeedback);
+feedbackReportBtn.addEventListener('click', openFeedbackModal);
+feedbackCancelBtn.addEventListener('click', closeFeedbackModal);
+feedbackSubmitBtn.addEventListener('click', submitFeedbackReport);
+exportBtn.addEventListener('click', exportReport);
+
+// Close modal on overlay click
+feedbackModal.querySelector('.modal-overlay')?.addEventListener('click', closeFeedbackModal);
 
 // ============================================================================
 // Initialization
@@ -382,11 +506,25 @@ async function init(): Promise<void> {
   const theme = await getCurrentTheme();
   applyTheme(theme);
   
-  // Display current domain
+  // Display current domain and store for feedback
+  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+  const tab = tabs[0];
+  if (tab?.url) {
+    currentUrl = tab.url;
+    try {
+      currentDomain = new URL(tab.url).hostname;
+    } catch {
+      currentDomain = 'unknown';
+    }
+  }
+  
   await displayCurrentDomain();
   
   // Load analysis when popup opens
-  await loadAnalysis();
+  const analysis = await loadAnalysis();
+  if (analysis && !('error' in analysis)) {
+    currentAnalysis = analysis;
+  }
 }
 
 init();

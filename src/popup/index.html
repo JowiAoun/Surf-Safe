@@ -99,12 +99,62 @@
         <div class="timestamp">
           <small id="timestamp">Analyzed: --</small>
         </div>
+
+        <!-- Feedback Section -->
+        <div class="section feedback-section">
+          <h3>Was this analysis accurate?</h3>
+          <div class="feedback-buttons">
+            <button id="feedback-accurate" class="btn btn-feedback btn-success" title="Yes, accurate">
+              👍 Accurate
+            </button>
+            <button id="feedback-report" class="btn btn-feedback btn-warning" title="Report issue">
+              ⚠️ Report Issue
+            </button>
+          </div>
+          <p id="feedback-status" class="feedback-status"></p>
+        </div>
       </div>
 
       <footer>
+        <button id="export-btn" class="btn btn-secondary">📋 Export Report</button>
         <button id="reanalyze-btn" class="btn btn-secondary">🔄 Re-analyze</button>
         <button id="options-btn" class="btn btn-link">⚙️ Settings</button>
       </footer>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <h2>Report an Issue</h2>
+        <p>Help us improve SurfSafe by reporting inaccurate analyses.</p>
+        
+        <div class="form-group">
+          <label>What was wrong?</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="feedback-type" value="FALSE_POSITIVE" checked>
+              <span>False Positive</span>
+              <small>Marked as threat but wasn't</small>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="feedback-type" value="FALSE_NEGATIVE">
+              <span>False Negative</span>
+              <small>Marked as safe but was suspicious</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="feedback-comment">Additional comments (optional)</label>
+          <textarea id="feedback-comment" rows="3" placeholder="Tell us more..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button id="feedback-cancel" class="btn btn-secondary">Cancel</button>
+          <button id="feedback-submit" class="btn btn-primary">Submit Feedback</button>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="./index.ts"></script>

@@ -499,3 +499,212 @@ footer {
 .score-animating {
   animation: pulse 0.1s ease-in-out;
 }
+
+/* ============================================================================
+   Feedback Section
+   ============================================================================ */
+
+.feedback-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+  margin-top: 8px;
+}
+
+.feedback-section h3 {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.feedback-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-feedback {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-feedback.btn-success {
+  background: var(--safe-bg);
+  color: var(--safe-color);
+  border-color: var(--safe-color);
+}
+
+.btn-feedback.btn-success:hover {
+  background: var(--safe-color);
+  color: white;
+}
+
+.btn-feedback.btn-warning {
+  background: var(--medium-bg);
+  color: var(--medium-color);
+  border-color: var(--medium-color);
+}
+
+.btn-feedback.btn-warning:hover {
+  background: var(--medium-color);
+  color: white;
+}
+
+.feedback-status {
+  font-size: 11px;
+  color: var(--safe-color);
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ============================================================================
+   Modal
+   ============================================================================ */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-primary);
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 320px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: modalIn 0.2s ease-out;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.modal-content h2 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.modal-content > p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-option:hover {
+  border-color: var(--accent-color);
+  background: var(--bg-secondary);
+}
+
+.radio-option input[type="radio"] {
+  accent-color: var(--accent-color);
+}
+
+.radio-option span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.radio-option small {
+  width: 100%;
+  padding-left: 22px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-actions .btn {
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+/* Footer adjustments */
+footer {
+  flex-wrap: wrap;
+}
+
+footer .btn {
+  flex: 1;
+  min-width: 80px;
+}
+

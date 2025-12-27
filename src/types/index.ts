@@ -91,6 +91,7 @@ export enum MessageType {
   GET_CURRENT_ANALYSIS = 'GET_CURRENT_ANALYSIS',
   CLEAR_CACHE = 'CLEAR_CACHE',
   GET_CACHE_STATS = 'GET_CACHE_STATS',
+  SUBMIT_FEEDBACK = 'SUBMIT_FEEDBACK',
   ERROR = 'ERROR',
 }
 
@@ -120,6 +121,40 @@ export enum StorageKey {
   ANALYSIS_HISTORY = 'analysisHistory',
   EXTENSION_SETTINGS = 'extensionSettings',
   THEME = 'theme',
+  USER_FEEDBACK = 'userFeedback',
+  USER_CORRECTIONS = 'userCorrections',
+}
+
+/**
+ * Feedback types for user reporting
+ */
+export enum FeedbackType {
+  FALSE_POSITIVE = 'FALSE_POSITIVE', // Marked as threat but wasn't
+  FALSE_NEGATIVE = 'FALSE_NEGATIVE', // Marked as safe but was threat
+  ACCURATE = 'ACCURATE',             // User confirms accuracy
+}
+
+/**
+ * User feedback submission
+ */
+export interface UserFeedback {
+  id: string;
+  url: string;
+  domain: string;
+  feedbackType: FeedbackType;
+  originalRiskLevel: RiskLevel;
+  userComment?: string;
+  timestamp: number;
+}
+
+/**
+ * User correction for local learning
+ */
+export interface UserCorrection {
+  domain: string;
+  adjustment: number; // -1 to 1, negative = safer, positive = riskier
+  feedbackCount: number;
+  lastUpdated: number;
 }
 
 /**

@@ -180,6 +180,19 @@ async function loadWhitelist(): Promise<void> {
   renderWhitelistTags(settings.whitelistedDomains);
 }
 
+const whitelistStatusEl = document.getElementById('whitelist-status')!;
+const whitelistStatusMessageEl = whitelistStatusEl.querySelector('p')!;
+
+function showWhitelistStatus(message: string, type: 'success' | 'error'): void {
+  whitelistStatusEl.className = `status ${type}`;
+  whitelistStatusMessageEl.textContent = message;
+  whitelistStatusEl.classList.remove('hidden');
+
+  setTimeout(() => {
+    whitelistStatusEl.classList.add('hidden');
+  }, 3000);
+}
+
 async function addDomainToWhitelist(): Promise<void> {
   const domain = whitelistInput.value.trim()
     .toLowerCase()
@@ -190,11 +203,18 @@ async function addDomainToWhitelist(): Promise<void> {
   if (!domain) {
     return;
   }
+
+  // Basic domain validation (must contain a dot and at least 2 chars, or be localhost)
+  const isValid = (domain.includes('.') && domain.length > 3) || domain === 'localhost';
+  if (!isValid) {
+    showWhitelistStatus('Please enter a valid domain (e.g., example.com)', 'error');
+    return;
+  }
   
   const settings = await getExtensionSettings();
   
   if (settings.whitelistedDomains.includes(domain)) {
-    showStatus('Domain already in whitelist', 'error');
+    showWhitelistStatus('Domain already in whitelist', 'error');
     return;
   }
   

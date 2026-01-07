@@ -411,7 +411,7 @@ function init(): void {
   };
   
   // Listen for trigger from popup (when popup opens but no analysis exists)
-  browser.runtime.onMessage.addListener((message: { type?: string }) => {
+  browser.runtime.onMessage.addListener((message: any) => {
     if (message?.type === 'TRIGGER_ANALYSIS') {
       console.log('Received TRIGGER_ANALYSIS from popup');
       // Force analysis even if URL matches

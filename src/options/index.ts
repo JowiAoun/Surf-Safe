@@ -199,6 +199,7 @@ function renderWhitelistTags(domains: string[]): void {
 }
 
 async function loadWhitelist(): Promise<void> {
+  // Load settings and render tags
   const settings = await getExtensionSettings();
   renderWhitelistTags(settings.whitelistedDomains);
 }

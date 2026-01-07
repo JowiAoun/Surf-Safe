@@ -4,6 +4,14 @@ import manifest from './public/manifest.json';
 
 export default defineConfig({
   plugins: [crx({ manifest })],
+  server: {
+    port: 5173,
+    strictPort: true,
+    host: true,
+    hmr: {
+      clientPort: 5173,
+    },
+  },
   build: {
     outDir: 'dist',
     minify: false, // Disable minification for debugging

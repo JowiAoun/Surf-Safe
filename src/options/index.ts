@@ -41,7 +41,10 @@ const SENSITIVITY_VALUES: SensitivityLevel[] = [
   SensitivityLevel.LOW,
   SensitivityLevel.MEDIUM,
   SensitivityLevel.HIGH,
+  SensitivityLevel.HIGH,
 ];
+
+let isWhitelistExpanded = false;
 
 // ============================================================================
 // API Key Validation
@@ -161,11 +164,23 @@ async function handleSensitivityChange(): Promise<void> {
 
 function renderWhitelistTags(domains: string[]): void {
   if (domains.length === 0) {
-    whitelistTagsEl.innerHTML = '<p class="empty-whitelist">No domains whitelisted</p>';
+    whitelistTagsEl.innerHTML = '<p class="empty-whitelist">No websites whitelisted</p>';
     return;
   }
   
-  whitelistTagsEl.innerHTML = domains
+  // Sort domains alphabetically (case-insensitive)
+  const sortedDomains = [...domains].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  
+  // Limit content if not expanded
+  const maxItems = 10;
+  let displayDomains = sortedDomains;
+  const showMore = !isWhitelistExpanded && sortedDomains.length > maxItems;
+  
+  if (showMore) {
+    displayDomains = sortedDomains.slice(0, maxItems);
+  }
+  
+  const tagsHtml = displayDomains
     .map((domain) => `
       <span class="whitelist-tag" data-domain="${domain}">
         ${domain}
@@ -173,6 +188,14 @@ function renderWhitelistTags(domains: string[]): void {
       </span>
     `)
     .join('');
+    
+  const buttonHtml = showMore
+    ? `<button id="show-more-whitelist-btn" class="show-more-btn">+ ${sortedDomains.length - maxItems} More</button>`
+    : (isWhitelistExpanded && sortedDomains.length > maxItems)
+      ? `<button id="show-less-whitelist-btn" class="show-more-btn">Show Less</button>`
+      : '';
+      
+  whitelistTagsEl.innerHTML = tagsHtml + buttonHtml;
 }
 
 async function loadWhitelist(): Promise<void> {
@@ -388,15 +411,22 @@ whitelistInput.addEventListener('keypress', (e) => {
 });
 providersToggle.addEventListener('click', toggleProviders);
 
-// Whitelist tag removal via event delegation
+// Whitelist interactions via event delegation
 whitelistTagsEl.addEventListener('click', (e) => {
   const target = e.target as HTMLElement;
+  
   if (target.classList.contains('remove-btn')) {
     const tag = target.closest('.whitelist-tag') as HTMLElement;
     const domain = tag?.dataset.domain;
     if (domain) {
       removeDomainFromWhitelist(domain);
     }
+  } else if (target.id === 'show-more-whitelist-btn') {
+    isWhitelistExpanded = true;
+    loadWhitelist();
+  } else if (target.id === 'show-less-whitelist-btn') {
+    isWhitelistExpanded = false;
+    loadWhitelist();
   }
 });
 

@@ -32,9 +32,9 @@ const providersContent = document.getElementById('providers-content')!;
 // ============================================================================
 
 const SENSITIVITY_DESCRIPTIONS: Record<SensitivityLevel, string> = {
-  [SensitivityLevel.LOW]: 'Only flags high-confidence threats. Best for experienced users who want minimal interruptions.',
-  [SensitivityLevel.MEDIUM]: 'Balanced detection - catches most threats while minimizing false positives.',
-  [SensitivityLevel.HIGH]: 'Maximum protection - flags potential threats more aggressively. May have more false positives.',
+  [SensitivityLevel.LOW]: 'Minimal protection - flags high-confidence threats. Best for experienced users who want minimal interruptions',
+  [SensitivityLevel.MEDIUM]: 'Balanced detection - catches most threats while minimizing false positives',
+  [SensitivityLevel.HIGH]: 'Maximum protection - flags potential threats more aggressively. May have more false positives',
 };
 
 const SENSITIVITY_VALUES: SensitivityLevel[] = [

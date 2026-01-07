@@ -20,6 +20,7 @@
   --card-shadow: 0 4px 12px rgba(0, 30, 40, 0.15);
   --on-accent-color: hsl(0, 0%, 100%);
   --input-bg: var(--bg-primary);
+  --label-bg: rgba(255, 255, 255, 0.4);
 }
 
 [data-theme="dark"] {
@@ -38,6 +39,7 @@
   --accent-color: hsl(186, 70%, 75%);
   --on-accent-color: hsl(234, 50%, 22%);
   --input-bg: hsl(194, 66%, 36%);
+  --label-bg: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -52,6 +54,7 @@ body {
   color: var(--text-primary);
   background: var(--bg-secondary);
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -324,6 +327,7 @@ input::placeholder {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
+  background: var(--label-bg);
 }
 
 .sensitivity-label.active {

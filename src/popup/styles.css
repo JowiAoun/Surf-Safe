@@ -1,48 +1,50 @@
 /* CSS Custom Properties for Theme Support */
 :root {
-  /* Light theme (default) */
-  --bg-primary: hsl(190, 59%, 95%);
-  --bg-secondary: hsl(190, 59%, 90%);
-  --bg-tertiary: hsl(190, 59%, 92%); /* Slightly different for contrast */
-  --text-primary: hsl(235, 49%, 22%);
-  --text-secondary: hsl(235, 49%, 35%); /* Lighter version of deep ocean */
-  --text-muted: hsl(235, 30%, 50%);
-  --border-color: hsl(194, 66%, 80%);
+  /* Light theme (default) - Wave colors from surf image */
+  --bg-primary: hsl(189, 58%, 84%); /* Lightest wave color as main background */
+  --bg-secondary: hsl(190, 55%, 49%); /* Medium wave color */
+  --bg-tertiary: hsl(194, 66%, 36%); /* Deep wave color */
+  --text-primary: hsl(234, 50%, 22%); /* Character's dark blue for main text */
+  --text-secondary: hsl(234, 40%, 30%); /* Slightly lighter dark blue */
+  --text-muted: hsl(234, 30%, 40%); /* Muted dark blue */
+  --border-color: hsl(190, 50%, 60%);
   
   /* Surf Accents */
   --accent-gradient: linear-gradient(135deg, hsl(194, 66%, 36%) 0%, hsl(190, 55%, 49%) 100%);
-  --accent-color: hsl(194, 66%, 36%);
-  --accent-hover: hsl(190, 55%, 49%);
+  --accent-color: hsl(234, 50%, 22%); /* Character's dark blue for accents */
+  --accent-hover: hsl(234, 50%, 32%); /* Lighter on hover */
+  --interactive-bg: hsl(234, 50%, 22%); /* Dark blue for buttons */
+  --interactive-text: hsl(0, 0%, 100%); /* White text on interactive elements */
   
   /* Risk colors (Surf-themed) */
-  --safe-bg: hsl(141, 28%, 90%);
-  --safe-color: hsl(141, 60%, 35%); /* Darker than leaf for text */
-  --low-bg: hsl(40, 100%, 92%);
-  --low-color: hsl(35, 90%, 35%); /* Darker than gold for text */
-  --medium-bg: hsl(22, 90%, 92%);
-  --medium-color: hsl(22, 90%, 45%); /* Darker than sunset */
-  --high-bg: hsl(0, 70%, 92%);
-  --high-color: hsl(0, 80%, 40%);
-  --critical-bg: hsl(0, 90%, 95%);
+  --safe-bg: hsl(141, 40%, 85%);
+  --safe-color: hsl(141, 60%, 30%); /* Dark for visibility */
+  --low-bg: hsl(40, 70%, 85%);
+  --low-color: hsl(35, 90%, 30%); /* Dark for visibility */
+  --medium-bg: hsl(22, 70%, 85%);
+  --medium-color: hsl(22, 90%, 35%); /* Dark for visibility */
+  --high-bg: hsl(0, 60%, 88%);
+  --high-color: hsl(0, 80%, 35%);
+  --critical-bg: hsl(0, 70%, 90%);
   --critical-color: hsl(0, 100%, 30%);
   
   /* Gauge colors */
-  --gauge-safe: hsl(141, 28%, 51%); /* Palm Leaf */
-  --gauge-low: hsl(40, 100%, 55%); /* Sun Gold */
-  --gauge-medium: hsl(22, 90%, 57%); /* Sunset Orange */
-  --gauge-high: hsl(0, 80%, 55%);
-  --gauge-critical: hsl(0, 90%, 45%);
-  --gauge-bg: hsl(190, 20%, 80%);
+  --gauge-safe: hsl(141, 50%, 45%);
+  --gauge-low: hsl(40, 100%, 50%);
+  --gauge-medium: hsl(22, 90%, 50%);
+  --gauge-high: hsl(0, 80%, 50%);
+  --gauge-critical: hsl(0, 90%, 40%);
+  --gauge-bg: hsl(190, 30%, 70%);
 }
 
 [data-theme="dark"] {
-  --bg-primary: hsl(235, 49%, 22%); /* Deep Ocean */
-  --bg-secondary: hsl(235, 49%, 18%); /* Darker Ocean */
-  --bg-tertiary: hsl(235, 49%, 25%); /* Lighter Ocean */
-  --text-primary: hsl(190, 59%, 95%); /* Foam */
-  --text-secondary: hsl(190, 40%, 80%);
-  --text-muted: hsl(190, 30%, 70%);
-  --border-color: hsl(235, 40%, 35%);
+  --bg-primary: hsl(194, 66%, 20%); /* Darker wave */
+  --bg-secondary: hsl(190, 55%, 30%); /* Medium dark wave */
+  --bg-tertiary: hsl(189, 58%, 40%); /* Lighter dark wave */
+  --text-primary: hsl(189, 58%, 95%); /* Very light wave tint */
+  --text-secondary: hsl(189, 40%, 85%);
+  --text-muted: hsl(189, 30%, 70%);
+  --border-color: hsl(194, 40%, 35%);
   
   /* Adjusted risk colors for dark theme */
   --safe-bg: hsl(141, 30%, 20%);
@@ -50,7 +52,7 @@
   --medium-bg: hsl(22, 40%, 20%);
   --high-bg: hsl(0, 40%, 20%);
   --critical-bg: hsl(0, 50%, 25%);
-  --gauge-bg: hsl(235, 40%, 35%);
+  --gauge-bg: hsl(194, 40%, 25%);
 }
 
 * {
@@ -515,8 +517,8 @@ footer {
 }
 
 .btn-primary {
-  background: var(--accent-color);
-  color: white;
+  background: var(--interactive-bg);
+  color: var(--interactive-text);
   flex: 1;
 }
 

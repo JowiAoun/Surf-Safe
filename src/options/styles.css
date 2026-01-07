@@ -1,34 +1,36 @@
 /* CSS Custom Properties for Theme Support */
 :root {
-  /* Light theme (default) */
-  --bg-primary: hsl(190, 59%, 95%);
-  --bg-secondary: hsl(190, 59%, 90%);
-  --bg-tertiary: hsl(190, 59%, 92%);
-  --text-primary: hsl(235, 49%, 22%);
-  --text-secondary: hsl(235, 49%, 35%);
-  --text-muted: hsl(235, 30%, 50%);
-  --border-color: hsl(194, 66%, 80%);
+  /* Light theme (default) - Wave colors from surf image */
+  --bg-primary: hsl(189, 58%, 84%); /* Lightest wave color as main background */
+  --bg-secondary: hsl(190, 55%, 49%); /* Medium wave color */
+  --bg-tertiary: hsl(194, 66%, 36%); /* Deep wave color */
+  --text-primary: hsl(234, 50%, 22%); /* Character's dark blue for main text */
+  --text-secondary: hsl(234, 40%, 30%); /* Slightly lighter dark blue */
+  --text-muted: hsl(234, 30%, 40%); /* Muted dark blue */
+  --border-color: hsl(190, 50%, 60%);
   --accent-gradient: linear-gradient(135deg, hsl(194, 66%, 36%) 0%, hsl(190, 55%, 49%) 100%);
-  --accent-color: hsl(194, 66%, 36%);
-  --accent-hover: hsl(190, 55%, 49%);
-  --success-bg: hsl(141, 28%, 90%);
-  --success-color: hsl(141, 60%, 35%);
-  --error-bg: hsl(0, 70%, 92%);
-  --error-color: hsl(0, 80%, 40%);
-  --card-shadow: 0 4px 12px rgba(30, 41, 59, 0.1);
+  --accent-color: hsl(234, 50%, 22%); /* Character's dark blue for accents */
+  --accent-hover: hsl(234, 50%, 32%); /* Lighter on hover */
+  --interactive-bg: hsl(234, 50%, 22%); /* Dark blue for buttons, sliders, providers */
+  --interactive-text: hsl(0, 0%, 100%); /* White text on interactive elements */
+  --success-bg: hsl(141, 40%, 85%);
+  --success-color: hsl(141, 60%, 30%);
+  --error-bg: hsl(0, 50%, 90%);
+  --error-color: hsl(0, 70%, 40%);
+  --card-shadow: 0 4px 12px rgba(0, 30, 40, 0.15);
 }
 
 [data-theme="dark"] {
-  --bg-primary: hsl(235, 49%, 22%);
-  --bg-secondary: hsl(235, 49%, 18%);
-  --bg-tertiary: hsl(235, 49%, 25%);
-  --text-primary: hsl(190, 59%, 95%);
-  --text-secondary: hsl(190, 40%, 80%);
-  --text-muted: hsl(190, 30%, 70%);
-  --border-color: hsl(235, 40%, 35%);
+  --bg-primary: hsl(194, 66%, 20%); /* Darker wave */
+  --bg-secondary: hsl(190, 55%, 30%); /* Medium dark wave */
+  --bg-tertiary: hsl(189, 58%, 40%); /* Lighter dark wave */
+  --text-primary: hsl(189, 58%, 95%); /* Very light wave tint */
+  --text-secondary: hsl(189, 40%, 85%);
+  --text-muted: hsl(189, 30%, 70%);
+  --border-color: hsl(194, 40%, 35%);
   --success-bg: hsl(141, 30%, 20%);
   --error-bg: hsl(0, 40%, 20%);
-  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -237,8 +239,8 @@ main {
 }
 
 .btn-primary {
-  background: var(--accent-color);
-  color: white;
+  background: var(--interactive-bg);
+  color: var(--interactive-text);
 }
 
 .btn-primary:hover {
@@ -357,10 +359,10 @@ main {
 .sensitivity-description {
   margin-top: 12px;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--interactive-text);
   text-align: center;
   padding: 8px 12px;
-  background: var(--bg-tertiary);
+  background: var(--interactive-bg);
   border-radius: 6px;
 }
 
@@ -483,15 +485,15 @@ main {
 
 .provider {
   padding: 14px;
-  background: var(--bg-tertiary);
+  background: var(--interactive-bg);
   border-radius: 8px;
-  border-left: 3px solid var(--accent-color);
+  border-left: 3px solid hsl(189, 58%, 84%);
 }
 
 .provider h3 {
   font-size: 14px;
   margin-bottom: 8px;
-  color: var(--accent-color);
+  color: hsl(189, 58%, 84%); /* Light wave color for contrast on dark bg */
 }
 
 .provider code {
@@ -508,12 +510,12 @@ main {
 
 .provider p {
   font-size: 11px;
-  color: var(--text-secondary);
+  color: hsl(189, 58%, 90%); /* Light for contrast on dark bg */
 }
 
 .provider small {
   font-size: 10px;
-  color: var(--text-muted);
+  color: hsl(189, 40%, 75%); /* Lighter muted for dark bg */
 }
 
 /* Card text for About section */

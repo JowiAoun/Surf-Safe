@@ -18,10 +18,16 @@
   --success-color: hsl(141, 70%, 75%);
   --error-bg: hsl(0, 50%, 35%);
   --error-color: hsl(0, 90%, 80%);
+  
+  /* Text colors for standalone text (e.g. hints) */
+  --text-success: hsl(141, 60%, 30%); /* Dark green for light bg */
+  --text-error: hsl(0, 70%, 40%); /* Dark red for light bg */
+  
   --card-shadow: 0 4px 12px rgba(0, 30, 40, 0.15);
   --on-accent-color: hsl(0, 0%, 100%);
   --input-bg: var(--bg-primary);
   --label-bg: rgba(255, 255, 255, 0.4);
+  --tag-bg: var(--bg-secondary); /* Match page bg for tags in light mode */
 }
 
 [data-theme="dark"] {
@@ -36,11 +42,17 @@
   --success-color: hsl(141, 70%, 75%);
   --error-bg: hsl(0, 50%, 35%);
   --error-color: hsl(0, 90%, 80%);
+  
+  /* Text colors for standalone text in dark mode */
+  --text-success: var(--success-color); /* Keep light for dark bg */
+  --text-error: var(--error-color); /* Keep light for dark bg */
+  
   --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   --accent-color: hsl(186, 70%, 75%);
   --on-accent-color: hsl(234, 50%, 22%);
   --input-bg: hsl(194, 66%, 36%);
   --label-bg: rgba(255, 255, 255, 0.08);
+  --tag-bg: var(--bg-tertiary); /* Keep tertiary for dark mode tags */
 }
 
 * {
@@ -420,7 +432,7 @@ input::placeholder {
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  background: var(--bg-tertiary);
+  background: var(--tag-bg);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   font-size: 12px;

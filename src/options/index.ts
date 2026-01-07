@@ -283,10 +283,10 @@ function updateApiKeyHint(): void {
   const validation = validateApiKeyFormat(apiKeyInput.value);
   if (validation && apiKeyInput.value.length > 0) {
     apiKeyHintEl.textContent = `⚠️ ${validation}`;
-    apiKeyHintEl.style.color = 'var(--error-color)';
+    apiKeyHintEl.style.color = 'var(--text-error)';
   } else if (apiKeyInput.value.length > 0) {
     apiKeyHintEl.textContent = '✓ API key format looks valid';
-    apiKeyHintEl.style.color = 'var(--success-color)';
+    apiKeyHintEl.style.color = 'var(--text-success)';
   } else {
     apiKeyHintEl.textContent = 'Your API key will be stored securely in browser storage';
     apiKeyHintEl.style.color = '';

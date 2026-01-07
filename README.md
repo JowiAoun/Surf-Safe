@@ -96,6 +96,32 @@ To re-analyze a page:
 
 ## Development
 
+### Development Workflow
+
+#### 1. Start the Dev Server
+Run the development server with hot reload enabled:
+```bash
+npm run dev
+```
+
+#### 2. Load the Extension
+**Standard / Host Setup:**
+1. Open Chrome and go to `chrome://extensions/`.
+2. Enable "Developer mode".
+3. Click "Load unpacked".
+4. Select the `dist` folder in the project root.
+
+**WSL2 Setup (Windows Host):**
+1. Ensure the dev server is running (`npm run dev`).
+2. Open Chrome on Windows and go to `chrome://extensions/`.
+3. Enable "Developer mode".
+4. Click "Load unpacked".
+5. Navigate to the network path: `\\wsl.localhost\<DistroName>\path\to\SurfSafe\dist`
+   (e.g., `\\wsl.localhost\Ubuntu\home\user\SurfSafe\dist`).
+   *Note: If you don't know your distro name, run `wsl -l` in PowerShell.*
+
+*Changes to files will automatically trigger a rebuild and reload the extension in the browser.*
+
 ### Scripts
 
 ```bash

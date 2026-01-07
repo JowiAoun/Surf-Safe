@@ -149,6 +149,9 @@ async function toggleTheme(): Promise<void> {
   
   applyTheme(newTheme);
   
+  // Save to local storage for immediate load (FOIT prevention)
+  localStorage.setItem('theme', newTheme);
+  
   try {
     await browser.storage.local.set({ theme: newTheme });
   } catch {

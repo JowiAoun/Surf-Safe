@@ -4,10 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SurfSafe - Scam Detection</title>
+    <script>
+      // Apply theme immediately to prevent flash of unstyled content
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        document.body.setAttribute('data-theme', savedTheme);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.setAttribute('data-theme', 'dark');
+      }
+    </script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="container" data-theme="light">
+    <div class="container">
       <header id="header-bg">
         <div class="header-content">
           <h1>SurfSafe</h1>

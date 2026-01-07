@@ -15,6 +15,19 @@
   --accent-hover: hsl(234, 50%, 32%); /* Lighter on hover */
   --interactive-bg: hsl(234, 50%, 22%); /* Dark blue for buttons */
   --interactive-text: hsl(0, 0%, 100%); /* White text on interactive elements */
+
+  /* Shared status colors (matched to dark mode) */
+  --success-bg: hsl(141, 40%, 35%);
+  --success-color: hsl(141, 70%, 75%);
+  --error-bg: hsl(0, 50%, 35%);
+  --error-color: hsl(0, 90%, 80%);
+  
+  /* Text colors for standalone text (e.g. hints) */
+  --text-success: hsl(141, 60%, 30%); /* Dark green for light bg */
+  --text-error: hsl(0, 70%, 40%); /* Dark red for light bg */
+  
+  --input-bg: var(--bg-primary);
+  --tag-bg: var(--bg-secondary); /* Match page bg for tags in light mode */
   
   /* Risk colors (Surf-themed) */
   --safe-bg: hsl(141, 40%, 85%);
@@ -35,17 +48,37 @@
   --gauge-high: hsl(0, 80%, 50%);
   --gauge-critical: hsl(0, 90%, 40%);
   --gauge-bg: hsl(190, 30%, 70%);
+
+  --on-accent-color: hsl(0, 0%, 100%);
+  --label-bg: rgba(255, 255, 255, 0.4);
 }
 
 [data-theme="dark"] {
-  --bg-primary: hsl(194, 66%, 20%); /* Darker wave */
-  --bg-secondary: hsl(190, 55%, 30%); /* Medium dark wave */
+  --bg-primary: hsl(190, 55%, 30%); /* Medium dark wave - Swapped */
+  --bg-secondary: hsl(194, 66%, 20%); /* Darker wave - Swapped */
   --bg-tertiary: hsl(189, 58%, 40%); /* Lighter dark wave */
   --text-primary: hsl(189, 58%, 95%); /* Very light wave tint */
   --text-secondary: hsl(189, 40%, 85%);
-  --text-muted: hsl(189, 30%, 70%);
-  --border-color: hsl(194, 40%, 35%);
+  --text-muted: hsl(189, 30%, 80%);
+  --border-color: hsl(194, 40%, 45%);
   
+  /* Shared status colors */
+  --success-bg: hsl(141, 40%, 35%);
+  --success-color: hsl(141, 70%, 75%);
+  --error-bg: hsl(0, 50%, 35%);
+  --error-color: hsl(0, 90%, 80%);
+
+  /* Text colors for standalone text in dark mode */
+  --text-success: var(--success-color); /* Keep light for dark bg */
+  --text-error: var(--error-color); /* Keep light for dark bg */
+  
+  --input-bg: hsl(194, 66%, 36%);
+  --tag-bg: var(--bg-tertiary); /* Keep tertiary for dark mode tags */
+
+  --accent-color: hsl(186, 70%, 75%);
+  --on-accent-color: hsl(234, 50%, 22%);
+  --label-bg: rgba(255, 255, 255, 0.08);
+
   /* Adjusted risk colors for dark theme */
   --safe-bg: hsl(141, 30%, 20%);
   --low-bg: hsl(40, 40%, 20%);
@@ -70,6 +103,7 @@ body {
   color: var(--text-primary);
   background: var(--bg-secondary);
   overflow-y: auto;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {

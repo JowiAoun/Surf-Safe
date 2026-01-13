@@ -19,9 +19,9 @@
   --error-bg: hsl(0, 50%, 35%);
   --error-color: hsl(0, 90%, 80%);
   
-  /* Text colors for standalone text (e.g. hints) */
-  --text-success: hsl(141, 60%, 30%); /* Dark green for light bg */
-  --text-error: hsl(0, 70%, 40%); /* Dark red for light bg */
+  /* Text colors for standalone text (e.g. hints) - unified for both themes */
+  --text-success: hsl(141, 55%, 42%);
+  --text-error: hsl(0, 65%, 50%);
   
   --card-shadow: 0 4px 12px rgba(0, 30, 40, 0.15);
   --on-accent-color: hsl(0, 0%, 100%);
@@ -43,9 +43,7 @@
   --error-bg: hsl(0, 50%, 35%);
   --error-color: hsl(0, 90%, 80%);
   
-  /* Text colors for standalone text in dark mode */
-  --text-success: var(--success-color); /* Keep light for dark bg */
-  --text-error: var(--error-color); /* Keep light for dark bg */
+  /* text-success and text-error use unified colors defined in :root */
   
   --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   --accent-color: hsl(186, 70%, 75%);

@@ -22,24 +22,24 @@
   --error-bg: hsl(0, 50%, 35%);
   --error-color: hsl(0, 90%, 80%);
   
-  /* Text colors for standalone text (e.g. hints) */
-  --text-success: hsl(141, 60%, 30%); /* Dark green for light bg */
-  --text-error: hsl(0, 70%, 40%); /* Dark red for light bg */
+  /* Text colors for standalone text (e.g. hints) - unified for both themes */
+  --text-success: hsl(141, 55%, 42%);
+  --text-error: hsl(0, 65%, 50%);
   
   --input-bg: var(--bg-primary);
   --tag-bg: var(--bg-secondary); /* Match page bg for tags in light mode */
   
-  /* Risk colors (Surf-themed) */
-  --safe-bg: hsl(141, 40%, 85%);
-  --safe-color: hsl(141, 60%, 30%); /* Dark for visibility */
-  --low-bg: hsl(40, 70%, 85%);
-  --low-color: hsl(35, 90%, 30%); /* Dark for visibility */
-  --medium-bg: hsl(22, 70%, 85%);
-  --medium-color: hsl(22, 90%, 35%); /* Dark for visibility */
-  --high-bg: hsl(0, 60%, 88%);
-  --high-color: hsl(0, 80%, 35%);
-  --critical-bg: hsl(0, 70%, 90%);
-  --critical-color: hsl(0, 100%, 30%);
+  /* Risk colors - unified for both themes (medium brightness) */
+  --safe-bg: hsl(141, 40%, 45%);
+  --safe-color: hsl(141, 90%, 95%);
+  --low-bg: hsl(40, 70%, 50%);
+  --low-color: hsl(40, 100%, 98%);
+  --medium-bg: hsl(22, 75%, 55%);
+  --medium-color: hsl(22, 100%, 98%);
+  --high-bg: hsl(0, 65%, 50%);
+  --high-color: hsl(0, 100%, 98%);
+  --critical-bg: hsl(0, 75%, 42%);
+  --critical-color: hsl(0, 100%, 98%);
   
   /* Gauge colors */
   --gauge-safe: hsl(141, 50%, 45%);
@@ -68,9 +68,7 @@
   --error-bg: hsl(0, 50%, 35%);
   --error-color: hsl(0, 90%, 80%);
 
-  /* Text colors for standalone text in dark mode */
-  --text-success: var(--success-color); /* Keep light for dark bg */
-  --text-error: var(--error-color); /* Keep light for dark bg */
+  /* text-success and text-error use unified colors defined in :root */
   
   --input-bg: hsl(194, 66%, 36%);
   --tag-bg: var(--bg-tertiary); /* Keep tertiary for dark mode tags */
@@ -79,12 +77,7 @@
   --on-accent-color: hsl(234, 50%, 22%);
   --label-bg: rgba(255, 255, 255, 0.08);
 
-  /* Adjusted risk colors for dark theme */
-  --safe-bg: hsl(141, 30%, 20%);
-  --low-bg: hsl(40, 40%, 20%);
-  --medium-bg: hsl(22, 40%, 20%);
-  --high-bg: hsl(0, 40%, 20%);
-  --critical-bg: hsl(0, 50%, 25%);
+  /* Only gauge-bg needs dark mode adjustment */
   --gauge-bg: hsl(194, 40%, 25%);
 }
 
@@ -655,25 +648,24 @@ footer {
 }
 
 .btn-feedback.btn-success {
-  background: transparent;
+  background: var(--safe-bg);
   color: var(--safe-color);
-  border: 2px solid var(--safe-color);
+  border: 1px solid var(--border-color);
 }
 
 .btn-feedback.btn-success:hover {
-  background: var(--safe-color);
-  color: white;
+  filter: brightness(1.1);
 }
 
 .btn-feedback.btn-warning {
-  background: transparent;
+  background: var(--medium-bg);
   color: var(--medium-color);
-  border: 2px solid var(--medium-color);
+  border: 1px solid var(--border-color);
 }
 
 .btn-feedback.btn-warning:hover {
-  background: var(--medium-color);
-  color: white;
+  background: var(--medium-bg);
+  filter: brightness(1.15);
 }
 
 .feedback-status {

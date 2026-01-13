@@ -317,7 +317,7 @@ function displayResults(result: AnalysisResult): void {
       seeWarningsBtn.textContent = '🔍 See Warnings on Page';
       seeWarningsBtn.disabled = false;
     } else {
-      seeWarningsBtn.textContent = '✅ No page warnings detected';
+      seeWarningsBtn.textContent = 'No page warnings detected';
       seeWarningsBtn.disabled = true;
     }
   }

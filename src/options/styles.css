@@ -573,6 +573,60 @@ input::placeholder {
   line-height: 1.6;
 }
 
+/* Theme Options */
+.theme-options {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.theme-option {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-option:hover {
+  border-color: var(--accent-color);
+}
+
+.theme-option:has(input:checked) {
+  border-color: var(--accent-color);
+  background: var(--bg-secondary);
+}
+
+.theme-option input {
+  display: none;
+}
+
+.theme-option-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.theme-option .theme-icon {
+  font-size: 18px;
+}
+
+.theme-option small {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* Version */
 .version {
   margin-top: 16px;

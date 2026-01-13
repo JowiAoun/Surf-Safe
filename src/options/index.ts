@@ -16,8 +16,6 @@ const apiKeyHintEl = document.getElementById('api-key-hint') as HTMLElement;
 const testBtn = document.getElementById('test-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status')!;
 const statusMessageEl = document.getElementById('status-message')!;
-const themeToggleBtn = document.getElementById('theme-toggle')!;
-const themeIconEl = themeToggleBtn.querySelector('.theme-icon')!;
 const sensitivitySlider = document.getElementById('sensitivity-slider') as HTMLInputElement;
 const sensitivityDescriptionEl = document.getElementById('sensitivity-description')!;
 const sensitivityLabels = document.querySelectorAll('.sensitivity-label');
@@ -27,6 +25,7 @@ const whitelistTagsEl = document.getElementById('whitelist-tags')!;
 const providersToggle = document.getElementById('providers-toggle')!;
 const providersContent = document.getElementById('providers-content')!;
 const highlightToggle = document.getElementById('highlight-toggle') as HTMLInputElement;
+const themeRadios = document.querySelectorAll<HTMLInputElement>('input[name="theme"]');
 
 // ============================================================================
 // Constants
@@ -95,43 +94,87 @@ function showStatus(message: string, type: 'success' | 'error'): void {
 // Theme Management
 // ============================================================================
 
-type Theme = 'light' | 'dark';
+type ThemePreference = 'system' | 'light' | 'dark';
+type AppliedTheme = 'light' | 'dark';
 
-async function getCurrentTheme(): Promise<Theme> {
+/**
+ * Get the currently stored theme preference
+ */
+async function getThemePreference(): Promise<ThemePreference> {
   try {
-    const stored = await browser.storage.local.get('theme');
-    if (stored.theme) {
-      return stored.theme as Theme;
+    const stored = await browser.storage.local.get('themePreference');
+    if (stored.themePreference) {
+      return stored.themePreference as ThemePreference;
     }
   } catch {
     // Ignore storage errors
   }
-  
-  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
+  return 'system'; // Default to system
+}
+
+/**
+ * Resolve theme preference to actual applied theme
+ */
+function resolveTheme(preference: ThemePreference): AppliedTheme {
+  if (preference === 'system') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
-  return 'light';
+  return preference;
 }
 
-function applyTheme(theme: Theme): void {
+/**
+ * Apply the theme to the document
+ */
+function applyTheme(theme: AppliedTheme): void {
   document.body.setAttribute('data-theme', theme);
-  themeIconEl.textContent = theme === 'dark' ? '☀️' : '🌙';
+  // Also save to localStorage for instant loading (FOIT prevention)
+  localStorage.setItem('theme', theme);
 }
 
-async function toggleTheme(): Promise<void> {
-  const currentTheme = document.body.getAttribute('data-theme') as Theme || 'light';
-  const newTheme: Theme = currentTheme === 'dark' ? 'light' : 'dark';
-  
-  applyTheme(newTheme);
-  
-  // Save to local storage for immediate load (FOIT prevention)
-  localStorage.setItem('theme', newTheme);
+/**
+ * Save and apply a theme preference
+ */
+async function setThemePreference(preference: ThemePreference): Promise<void> {
+  const appliedTheme = resolveTheme(preference);
+  applyTheme(appliedTheme);
   
   try {
-    await browser.storage.local.set({ theme: newTheme });
+    await browser.storage.local.set({ themePreference: preference });
   } catch {
     // Ignore storage errors
   }
+}
+
+/**
+ * Initialize theme radio buttons
+ */
+async function initThemeUI(): Promise<void> {
+  const preference = await getThemePreference();
+  
+  // Set the correct radio button
+  themeRadios.forEach(radio => {
+    radio.checked = radio.value === preference;
+  });
+  
+  // Apply theme
+  applyTheme(resolveTheme(preference));
+  
+  // Listen for changes
+  themeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        setThemePreference(radio.value as ThemePreference);
+      }
+    });
+  });
+  
+  // Listen for system theme changes (when 'system' is selected)
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
+    const currentPref = await getThemePreference();
+    if (currentPref === 'system') {
+      applyTheme(resolveTheme('system'));
+    }
+  });
 }
 
 // ============================================================================
@@ -426,7 +469,6 @@ function toggleProviders(): void {
 
 form.addEventListener('submit', saveConfig);
 testBtn.addEventListener('click', testConnection);
-themeToggleBtn.addEventListener('click', toggleTheme);
 toggleKeyVisibilityBtn.addEventListener('click', toggleKeyVisibility);
 apiKeyInput.addEventListener('input', updateApiKeyHint);
 sensitivitySlider.addEventListener('input', handleSensitivityChange);
@@ -472,9 +514,8 @@ sensitivityLabels.forEach((label, index) => {
 // ============================================================================
 
 async function init(): Promise<void> {
-  // Apply theme
-  const theme = await getCurrentTheme();
-  applyTheme(theme);
+  // Initialize theme UI with radio buttons
+  await initThemeUI();
   
   // Load settings
   const settings = await getExtensionSettings();

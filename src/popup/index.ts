@@ -21,8 +21,6 @@ const timestampEl = document.getElementById('timestamp')!;
 const reanalyzeBtn = document.getElementById('reanalyze-btn')!;
 const configureBtn = document.getElementById('configure-btn')!;
 const optionsBtn = document.getElementById('options-btn')!;
-const themeToggleBtn = document.getElementById('theme-toggle')!;
-const themeIconEl = themeToggleBtn.querySelector('.theme-icon')!;
 const detailsToggleBtn = document.getElementById('details-toggle')!;
 const detailsContentEl = document.getElementById('details-content')!;
 const gaugeFillEl = document.getElementById('gauge-fill')!;
@@ -146,53 +144,33 @@ function formatRelativeTime(timestamp: number): string {
 // Theme Management
 // ============================================================================
 
-type Theme = 'light' | 'dark';
+type ThemePreference = 'system' | 'light' | 'dark';
+type AppliedTheme = 'light' | 'dark';
 
 /**
- * Get current theme from storage or system preference
+ * Get theme preference and apply it
  */
-async function getCurrentTheme(): Promise<Theme> {
+async function initTheme(): Promise<void> {
+  let preference: ThemePreference = 'system';
+  
   try {
-    const stored = await browser.storage.local.get('theme');
-    if (stored.theme) {
-      return stored.theme as Theme;
+    const stored = await browser.storage.local.get('themePreference');
+    if (stored.themePreference) {
+      preference = stored.themePreference as ThemePreference;
     }
   } catch {
     // Ignore storage errors
   }
   
-  // Default to system preference
-  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
+  // Resolve and apply theme
+  let theme: AppliedTheme;
+  if (preference === 'system') {
+    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } else {
+    theme = preference;
   }
-  return 'light';
-}
-
-/**
- * Apply theme to the UI
- */
-function applyTheme(theme: Theme): void {
+  
   document.body.setAttribute('data-theme', theme);
-  themeIconEl.textContent = theme === 'dark' ? '☀️' : '🌙';
-}
-
-/**
- * Toggle theme and persist
- */
-async function toggleTheme(): Promise<void> {
-  const currentTheme = document.body.getAttribute('data-theme') as Theme || 'light';
-  const newTheme: Theme = currentTheme === 'dark' ? 'light' : 'dark';
-  
-  applyTheme(newTheme);
-  
-  // Save to local storage for immediate load (FOIT prevention)
-  localStorage.setItem('theme', newTheme);
-  
-  try {
-    await browser.storage.local.set({ theme: newTheme });
-  } catch {
-    // Ignore storage errors
-  }
 }
 
 // ============================================================================
@@ -664,7 +642,6 @@ async function exportReport(): Promise<void> {
 reanalyzeBtn.addEventListener('click', reanalyze);
 configureBtn.addEventListener('click', openOptions);
 optionsBtn.addEventListener('click', openOptions);
-themeToggleBtn.addEventListener('click', toggleTheme);
 detailsToggleBtn.addEventListener('click', toggleDetails);
 
 // Feedback event listeners
@@ -684,8 +661,7 @@ feedbackModal.querySelector('.modal-overlay')?.addEventListener('click', closeFe
 
 async function init(): Promise<void> {
   // Apply saved theme
-  const theme = await getCurrentTheme();
-  applyTheme(theme);
+  await initTheme();
   
   // Display current domain and store for feedback
   const tabs = await browser.tabs.query({ active: true, currentWindow: true });

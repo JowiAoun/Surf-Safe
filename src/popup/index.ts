@@ -106,6 +106,43 @@ export function getScoreColorClass(score: number): string {
 }
 
 // ============================================================================
+// Time Formatting
+// ============================================================================
+
+/**
+ * Format a timestamp as human-readable relative time
+ */
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (seconds < 30) {
+    return 'just now';
+  } else if (seconds < 60) {
+    return `${seconds} seconds ago`;
+  } else if (minutes === 1) {
+    return 'a minute ago';
+  } else if (minutes < 60) {
+    return `${minutes} minutes ago`;
+  } else if (hours === 1) {
+    return 'an hour ago';
+  } else if (hours < 24) {
+    return `${hours} hours ago`;
+  } else if (days === 1) {
+    return 'yesterday';
+  } else if (days < 30) {
+    return `${days} days ago`;
+  } else {
+    return '30+ days ago';
+  }
+}
+
+// ============================================================================
 // Theme Management
 // ============================================================================
 
@@ -269,9 +306,8 @@ function displayResults(result: AnalysisResult): void {
   // Display explanation
   explanationEl.textContent = result.explanation || 'No additional details available.';
 
-  // Display timestamp
-  const date = new Date(result.timestamp);
-  timestampEl.textContent = `Analyzed: ${date.toLocaleString()}`;
+  // Display timestamp as relative time
+  timestampEl.textContent = `Analyzed ${formatRelativeTime(result.timestamp)}`;
   
   // Show "See Warnings" button when risk level is not SAFE
   // (suspicious passages may exist even without specific threat labels)

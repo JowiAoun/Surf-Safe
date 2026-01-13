@@ -72,6 +72,16 @@ export interface PageAnalysisRequest {
 }
 
 /**
+ * Suspicious text passage identified by AI
+ */
+export interface SuspiciousPassage {
+  text: string;
+  labels: ThreatLabel[];
+  confidence: number;
+  reason: string;
+}
+
+/**
  * Analysis result from LLM
  */
 export interface AnalysisResult {
@@ -80,6 +90,7 @@ export interface AnalysisResult {
   explanation: string;
   confidence: number;
   timestamp: number;
+  suspiciousPassages?: SuspiciousPassage[];
 }
 
 /**
@@ -92,6 +103,8 @@ export enum MessageType {
   CLEAR_CACHE = 'CLEAR_CACHE',
   GET_CACHE_STATS = 'GET_CACHE_STATS',
   SUBMIT_FEEDBACK = 'SUBMIT_FEEDBACK',
+  UPDATE_HIGHLIGHTS = 'UPDATE_HIGHLIGHTS',
+  SHOW_WARNINGS = 'SHOW_WARNINGS',
   ERROR = 'ERROR',
 }
 
@@ -182,6 +195,7 @@ export interface ExtensionSettings {
   sensitivity: SensitivityLevel;
   whitelistedDomains: string[];
   theme: 'light' | 'dark' | 'system';
+  highlightSuspiciousText: boolean;
 }
 
 /**

@@ -2,6 +2,7 @@ import browser from 'webextension-polyfill';
 import { MessageType, PageAnalysisRequest, AnalysisResult } from '@/types';
 import { sendToBackground, createMessage } from '@/utils/messaging';
 import { debounce, DEBOUNCE_DELAY_MS } from '@/utils/cache';
+import { applyHighlights, clearHighlights, setupHighlightListener } from './highlighter';
 
 console.log('SurfSafe content script loaded on:', window.location.href);
 
@@ -349,6 +350,11 @@ async function performAnalysis(): Promise<void> {
       lastAnalyzedUrl = currentUrl;
       // Store result for popup to retrieve
       sessionStorage.setItem('surfsafe-analysis', JSON.stringify(result));
+      
+      // Apply text highlights if passages are present
+      if (result.suspiciousPassages && result.suspiciousPassages.length > 0) {
+        applyHighlights(result.suspiciousPassages);
+      }
     }
   } catch (error) {
     console.error('Failed to analyze page:', error);
@@ -422,6 +428,9 @@ function init(): void {
     }
     return undefined;
   });
+  
+  // Setup highlight toggle listener
+  setupHighlightListener();
 }
 
 // Start the content script

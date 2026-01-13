@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill';
-import { ApiConfig, SensitivityLevel, ExtensionSettings } from '@/types';
+import { ApiConfig, SensitivityLevel, ExtensionSettings, MessageType } from '@/types';
 import { getApiConfig, saveApiConfig, getExtensionSettings, saveExtensionSettings } from '@/utils/storage';
 
 // ============================================================================
@@ -26,6 +26,7 @@ const addWhitelistBtn = document.getElementById('add-whitelist-btn')!;
 const whitelistTagsEl = document.getElementById('whitelist-tags')!;
 const providersToggle = document.getElementById('providers-toggle')!;
 const providersContent = document.getElementById('providers-content')!;
+const highlightToggle = document.getElementById('highlight-toggle') as HTMLInputElement;
 
 // ============================================================================
 // Constants
@@ -156,6 +157,32 @@ async function handleSensitivityChange(): Promise<void> {
   const settings = await getExtensionSettings();
   settings.sensitivity = level;
   await saveExtensionSettings(settings);
+}
+
+// ============================================================================
+// Highlight Toggle Management
+// ============================================================================
+
+async function handleHighlightToggle(): Promise<void> {
+  const enabled = highlightToggle.checked;
+  
+  const settings = await getExtensionSettings();
+  settings.highlightSuspiciousText = enabled;
+  await saveExtensionSettings(settings);
+  
+  // Send message to active tab to update highlights
+  try {
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    if (tabs[0]?.id) {
+      await browser.tabs.sendMessage(tabs[0].id, {
+        type: MessageType.UPDATE_HIGHLIGHTS,
+        payload: { enabled }
+      });
+    }
+  } catch (error) {
+    // Tab might not have content script, ignore
+    console.log('Could not send highlight toggle to tab:', error);
+  }
 }
 
 // ============================================================================
@@ -403,6 +430,7 @@ themeToggleBtn.addEventListener('click', toggleTheme);
 toggleKeyVisibilityBtn.addEventListener('click', toggleKeyVisibility);
 apiKeyInput.addEventListener('input', updateApiKeyHint);
 sensitivitySlider.addEventListener('input', handleSensitivityChange);
+highlightToggle.addEventListener('change', handleHighlightToggle);
 addWhitelistBtn.addEventListener('click', addDomainToWhitelist);
 whitelistInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
@@ -452,6 +480,7 @@ async function init(): Promise<void> {
   const settings = await getExtensionSettings();
   updateSensitivityUI(settings.sensitivity);
   renderWhitelistTags(settings.whitelistedDomains);
+  highlightToggle.checked = settings.highlightSuspiciousText;
   
   // Load API config
   await loadConfig();

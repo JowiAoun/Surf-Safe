@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   sensitivity: SensitivityLevel.MEDIUM,
   whitelistedDomains: [],
   theme: 'system',
+  highlightSuspiciousText: true,
 };
 
 /**

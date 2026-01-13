@@ -421,7 +421,10 @@ Respond in JSON format:
   "riskLevel": "SAFE|LOW|MEDIUM|HIGH|CRITICAL",
   "threats": ["THREAT1", "THREAT2"],
   "explanation": "Brief explanation of findings",
-  "confidence": 0.0-1.0
+  "confidence": 0.0-1.0,
+  "suspiciousPassages": [
+    {"text": "exact suspicious text from page", "labels": ["THREAT1"], "confidence": 0.9, "reason": "why this is suspicious"}
+  ]
 }`;
   }
 
@@ -484,12 +487,29 @@ Risk Level Guidelines:
           ? Math.max(0, Math.min(1, parsed.confidence))
           : 0.5;
 
+      // Parse suspicious passages if present
+      let suspiciousPassages: Array<{ text: string; labels: ThreatLabel[]; confidence: number; reason: string }> | undefined;
+      if (Array.isArray(parsed.suspiciousPassages)) {
+        suspiciousPassages = parsed.suspiciousPassages
+          .filter((p: any) => p && typeof p.text === 'string' && p.text.length > 0)
+          .map((p: any) => ({
+            text: String(p.text).substring(0, 200),
+            labels: Array.isArray(p.labels)
+              ? p.labels.filter((l: string) => Object.values(ThreatLabel).includes(l as ThreatLabel))
+              : [],
+            confidence: typeof p.confidence === 'number' ? Math.max(0, Math.min(1, p.confidence)) : confidence,
+            reason: String(p.reason || '').substring(0, 200),
+          }))
+          .slice(0, 20);
+      }
+
       return {
         riskLevel: parsed.riskLevel as RiskLevel,
         threats: validThreats as ThreatLabel[],
         explanation: parsed.explanation || 'No explanation provided',
         confidence,
         timestamp: Date.now(),
+        suspiciousPassages,
       };
     } catch (error) {
       console.error('Failed to parse LLM response:', content, error);

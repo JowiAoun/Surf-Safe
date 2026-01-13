@@ -40,6 +40,7 @@ const feedbackCancelBtn = document.getElementById('feedback-cancel')!;
 const feedbackSubmitBtn = document.getElementById('feedback-submit')!;
 const feedbackCommentEl = document.getElementById('feedback-comment') as HTMLTextAreaElement;
 const exportBtn = document.getElementById('export-btn') as HTMLButtonElement;
+const seeWarningsBtn = document.getElementById('see-warnings-btn') as HTMLButtonElement;
 
 // Store current analysis for feedback
 let currentAnalysis: AnalysisResult | null = null;
@@ -279,6 +280,12 @@ function displayResults(result: AnalysisResult): void {
   const date = new Date(result.timestamp);
   timestampEl.textContent = `Analyzed: ${date.toLocaleString()}`;
   
+  // Show "See Warnings" button when risk level is not SAFE
+  // (suspicious passages may exist even without specific threat labels)
+  if (seeWarningsBtn && result.riskLevel !== RiskLevel.SAFE) {
+    seeWarningsBtn.classList.remove('hidden');
+  }
+  
   // Reset details toggle
   detailsToggleBtn.setAttribute('aria-expanded', 'false');
   detailsContentEl.classList.add('collapsed');
@@ -501,6 +508,24 @@ function toggleDetails(): void {
   detailsContentEl.classList.toggle('collapsed');
 }
 
+/**
+ * Trigger showing warnings on page
+ */
+async function seeWarnings(): Promise<void> {
+  try {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (!tab.id) return;
+    
+    // Send message to content script to show navigation widget
+    await browser.tabs.sendMessage(tab.id, { type: MessageType.SHOW_WARNINGS });
+    
+    // Close popup so user can see the page
+    window.close();
+  } catch (error) {
+    console.error('Failed to show warnings:', error);
+  }
+}
+
 // ============================================================================
 // Feedback Functions
 // ============================================================================
@@ -612,6 +637,7 @@ feedbackReportBtn.addEventListener('click', openFeedbackModal);
 feedbackCancelBtn.addEventListener('click', closeFeedbackModal);
 feedbackSubmitBtn.addEventListener('click', submitFeedbackReport);
 exportBtn.addEventListener('click', exportReport);
+seeWarningsBtn?.addEventListener('click', seeWarnings);
 
 // Close modal on overlay click
 feedbackModal.querySelector('.modal-overlay')?.addEventListener('click', closeFeedbackModal);

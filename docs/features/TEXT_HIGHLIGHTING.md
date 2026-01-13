@@ -35,6 +35,56 @@ Users can enable/disable highlighting from the Settings page:
 - **Default State**: Enabled
 - **Persistence**: Stored in `chrome.storage.sync`
 
+### Highlight Navigation
+
+A floating navigation widget allows users to cycle through detected warnings:
+
+#### Navigation Widget
+- **Position**: Fixed bottom-right corner of viewport
+- **Visibility**: Only appears when highlights exist on the page
+- **Components**:
+  - Counter badge showing "X of Y" (current/total highlights)
+  - "Previous" button (↑ arrow)
+  - "Next" button (↓ arrow)
+  - Close button to dismiss the widget
+
+#### Navigation Behavior
+1. **Scroll to highlight**: Clicking Next/Previous smoothly scrolls the page to center the target highlight in the viewport
+2. **Visual focus**: The active highlight receives an enhanced visual indicator (pulsing border or glow effect)
+3. **Auto-open tooltip**: The tooltip for the active highlight opens automatically and remains visible until the user navigates away or clicks elsewhere
+4. **Keyboard support**: Arrow keys can navigate between highlights when the widget is focused
+5. **Wrap-around**: Navigation wraps from last to first (and vice versa)
+
+#### Widget Styling
+```css
+.surfsafe-nav-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  z-index: 2147483646;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #fff;
+}
+
+.surfsafe-highlight--active {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  animation: surfsafe-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes surfsafe-pulse {
+  0%, 100% { outline-color: #3b82f6; }
+  50% { outline-color: #60a5fa; }
+}
+```
+
 ## Technical Requirements
 
 ### Content Script Updates

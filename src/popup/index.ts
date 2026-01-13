@@ -17,7 +17,6 @@ const riskBadgeEl = document.getElementById('risk-badge')!;
 const riskLevelEl = document.getElementById('risk-level')!;
 const threatsListEl = document.getElementById('threats-list')!;
 const explanationEl = document.getElementById('explanation')!;
-const timestampEl = document.getElementById('timestamp')!;
 const reanalyzeBtn = document.getElementById('reanalyze-btn')!;
 const configureBtn = document.getElementById('configure-btn')!;
 const optionsBtn = document.getElementById('options-btn')!;
@@ -284,8 +283,10 @@ function displayResults(result: AnalysisResult): void {
   // Display explanation
   explanationEl.textContent = result.explanation || 'No additional details available.';
 
-  // Display timestamp as relative time
-  timestampEl.textContent = `Analyzed ${formatRelativeTime(result.timestamp)}`;
+  // Update domain display to include timestamp
+  if (currentDomain) {
+    domainDisplayEl.textContent = `${currentDomain} · Analyzed ${formatRelativeTime(result.timestamp)}`;
+  }
   
   // Update "See Warnings" button based on suspicious passages
   if (seeWarningsBtn) {

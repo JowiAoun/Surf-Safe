@@ -15,8 +15,6 @@ const errorHintEl = document.getElementById('error-hint')!;
 const resultsEl = document.getElementById('results')!;
 const riskBadgeEl = document.getElementById('risk-badge')!;
 const riskLevelEl = document.getElementById('risk-level')!;
-const confidenceFillEl = document.getElementById('confidence-fill')!;
-const confidenceTextEl = document.getElementById('confidence-text')!;
 const threatsListEl = document.getElementById('threats-list')!;
 const explanationEl = document.getElementById('explanation')!;
 const timestampEl = document.getElementById('timestamp')!;
@@ -264,11 +262,6 @@ function displayResults(result: AnalysisResult): void {
   // Display risk level
   riskLevelEl.textContent = result.riskLevel;
   riskBadgeEl.className = `risk-badge ${result.riskLevel.toLowerCase()}`;
-
-  // Display confidence
-  const confidencePercent = Math.round(result.confidence * 100);
-  confidenceFillEl.style.width = `${confidencePercent}%`;
-  confidenceTextEl.textContent = `${confidencePercent}% confidence`;
 
   // Display threats
   renderThreats(result.threats);

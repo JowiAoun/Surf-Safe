@@ -111,6 +111,7 @@ body {
   flex-direction: column;
   min-height: 450px;
   background: var(--bg-primary);
+  transition: background-color 0.3s ease;
 }
 
 /* Header */
@@ -350,6 +351,7 @@ header h1 {
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 4px;
+  transition: color 0.3s ease;
 }
 
 /* Risk Badge */
@@ -470,7 +472,7 @@ header h1 {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .details-toggle:hover {
@@ -488,7 +490,7 @@ header h1 {
 
 .details-content {
   overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+  transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
   max-height: 200px;
   padding: 12px;
   opacity: 1;
@@ -532,6 +534,7 @@ footer {
   border-top: 1px solid var(--border-color);
   background: var(--bg-tertiary);
   margin-top: auto;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Buttons */

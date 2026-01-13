@@ -421,9 +421,8 @@ Respond in JSON format:
   "riskLevel": "SAFE|LOW|MEDIUM|HIGH|CRITICAL",
   "threats": ["THREAT1", "THREAT2"],
   "explanation": "Brief explanation of findings",
-  "confidence": 0.0-1.0,
   "suspiciousPassages": [
-    {"text": "exact suspicious text from page", "labels": ["THREAT1"], "confidence": 0.9, "reason": "why this is suspicious"}
+    {"text": "exact suspicious text from page", "labels": ["THREAT1"], "reason": "why this is suspicious"}
   ]
 }`;
   }

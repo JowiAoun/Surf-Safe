@@ -465,18 +465,18 @@ header h1 {
   justify-content: space-between;
   align-items: center;
   padding: 10px 12px;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .details-toggle:hover {
-  background: var(--bg-secondary);
+  background: var(--border-color);
 }
 
 .toggle-icon {
@@ -494,7 +494,7 @@ header h1 {
   max-height: 200px;
   padding: 12px;
   opacity: 1;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-top: none;
   border-radius: 0 0 6px 6px;
@@ -583,6 +583,24 @@ footer {
 
 .btn-link:hover {
   color: var(--text-primary);
+}
+
+.btn-warning:disabled {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  cursor: default;
+  opacity: 0.9;
+}
+
+.btn-warning {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--border-color);
 }
 
 /* Animations */

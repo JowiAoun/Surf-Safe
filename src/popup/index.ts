@@ -309,10 +309,17 @@ function displayResults(result: AnalysisResult): void {
   // Display timestamp as relative time
   timestampEl.textContent = `Analyzed ${formatRelativeTime(result.timestamp)}`;
   
-  // Show "See Warnings" button when risk level is not SAFE
-  // (suspicious passages may exist even without specific threat labels)
-  if (seeWarningsBtn && result.riskLevel !== RiskLevel.SAFE) {
+  // Update "See Warnings" button based on suspicious passages
+  if (seeWarningsBtn) {
     seeWarningsBtn.classList.remove('hidden');
+    const hasWarnings = result.suspiciousPassages && result.suspiciousPassages.length > 0;
+    if (hasWarnings) {
+      seeWarningsBtn.textContent = '🔍 See Warnings on Page';
+      seeWarningsBtn.disabled = false;
+    } else {
+      seeWarningsBtn.textContent = '✅ No page warnings detected';
+      seeWarningsBtn.disabled = true;
+    }
   }
   
   // Reset details toggle

@@ -102,7 +102,7 @@ body {
 .container {
   display: flex;
   flex-direction: column;
-  min-height: 450px;
+  min-height: 520px;
   background: var(--bg-primary);
   transition: background-color 0.3s ease;
 }
@@ -387,7 +387,7 @@ header h1 {
 
 /* Sections */
 .section {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .section h3 {
@@ -458,18 +458,18 @@ header h1 {
   justify-content: space-between;
   align-items: center;
   padding: 10px 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  border: 1px solid var(--accent-color);
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--accent-color);
   transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .details-toggle:hover {
-  background: var(--border-color);
+  background: var(--bg-secondary);
 }
 
 .toggle-icon {
@@ -523,7 +523,7 @@ header h1 {
 footer {
   display: flex;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 6px 16px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-tertiary);
   margin-top: auto;
@@ -622,8 +622,8 @@ footer {
 
 .feedback-section {
   border-top: 1px solid var(--border-color);
-  padding-top: 12px;
-  margin-top: 8px;
+  padding-top: 8px;
+  margin-top: 4px;
 }
 
 .feedback-section h3 {

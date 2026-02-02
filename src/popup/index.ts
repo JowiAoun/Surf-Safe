@@ -2,6 +2,7 @@ import browser from 'webextension-polyfill';
 import { MessageType, AnalysisResult, RiskLevel, ThreatLabel, FeedbackType, UserFeedback } from '@/types';
 import { sendToBackground, createMessage } from '@/utils/messaging';
 import { saveUserFeedback, generateExportReport, getApiConfig } from '@/utils/storage';
+import { isProtectedUrl } from '@/utils/sanitize';
 
 // ============================================================================
 // DOM Elements
@@ -10,6 +11,7 @@ import { saveUserFeedback, generateExportReport, getApiConfig } from '@/utils/st
 const containerEl = document.querySelector('.container') as HTMLElement;
 const loadingEl = document.getElementById('loading')!;
 const errorEl = document.getElementById('error')!;
+const errorIconEl = document.querySelector('.error-icon')!;
 const errorMessageEl = document.getElementById('error-message')!;
 const errorHintEl = document.getElementById('error-hint')!;
 const resultsEl = document.getElementById('results')!;
@@ -338,8 +340,22 @@ function displayError(message: string): void {
   loadingEl.classList.add('hidden');
   resultsEl.classList.add('hidden');
   errorEl.classList.remove('hidden');
+  errorIconEl.textContent = '⚠️';
   errorMessageEl.textContent = message;
   errorHintEl.textContent = getErrorHint(message);
+}
+
+/**
+ * Display protected page message
+ */
+function displayProtectedPage(): void {
+  loadingEl.classList.add('hidden');
+  resultsEl.classList.add('hidden');
+  errorEl.classList.remove('hidden');
+  errorIconEl.textContent = '🛡️';
+  errorMessageEl.textContent = 'Protected Page';
+  errorHintEl.textContent = 'SurfSafe cannot run on internal browser pages or other extensions.';
+  configureBtn.classList.add('hidden');
 }
 
 /**
@@ -677,6 +693,12 @@ async function init(): Promise<void> {
   }
   
   await displayCurrentDomain();
+  
+  // Check for protected pages (e.g., new tab, settings)
+  if (isProtectedUrl(currentUrl)) {
+    displayProtectedPage();
+    return;
+  }
   
   // Check if API is configured
   const apiConfig = await getApiConfig();

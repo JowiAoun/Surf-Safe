@@ -103,11 +103,30 @@ export function sanitizeUrl(input: string): string {
   }
 }
 
-/**
- * Check if URL is safe (http/https only)
- */
 export function isValidUrl(input: string): boolean {
   return sanitizeUrl(input) !== '';
+}
+
+/**
+ * Check if the URL is a protected browser page where extensions cannot run
+ */
+export function isProtectedUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  
+  try {
+    const protocol = new URL(url).protocol;
+    return [
+      'chrome:', 
+      'edge:', 
+      'about:', 
+      'moz-extension:', 
+      'chrome-extension:',
+      'view-source:'
+    ].includes(protocol);
+  } catch {
+    // If invalid URL, treat as not protected (other validation will fail)
+    return false;
+  }
 }
 
 // ============================================================================

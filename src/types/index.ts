@@ -99,6 +99,7 @@ export interface AnalysisResult {
 export enum MessageType {
   ANALYZE_PAGE = 'ANALYZE_PAGE',
   ANALYSIS_COMPLETE = 'ANALYSIS_COMPLETE',
+  ANALYSIS_PROGRESS = 'ANALYSIS_PROGRESS',
   GET_CURRENT_ANALYSIS = 'GET_CURRENT_ANALYSIS',
   CLEAR_CACHE = 'CLEAR_CACHE',
   GET_CACHE_STATS = 'GET_CACHE_STATS',
@@ -291,4 +292,36 @@ export interface ThreatDetail {
 export interface EnhancedAnalysisResult extends AnalysisResult {
   threatDetails?: ThreatDetail[];
   analysisVersion?: string;
+}
+
+/**
+ * Result from analyzing a single chunk of content
+ */
+export interface ChunkAnalysisResult {
+  chunkIndex: number;
+  suspiciousPassages: SuspiciousPassage[];
+  threats: ThreatLabel[];
+}
+
+/**
+ * Progress update during chunked analysis
+ */
+export interface AnalysisProgress {
+  currentChunk: number;
+  totalChunks: number;
+  status: 'analyzing' | 'complete' | 'error';
+  partialResult?: Partial<AnalysisResult>;
+  error?: string;
+}
+
+/**
+ * State for tracking chunked analysis
+ */
+export interface ChunkedAnalysisState {
+  url: string;
+  totalChunks: number;
+  completedChunks: number;
+  accumulatedPassages: SuspiciousPassage[];
+  accumulatedThreats: ThreatLabel[];
+  startTime: number;
 }

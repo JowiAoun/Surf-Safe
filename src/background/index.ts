@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill';
-import { Message, MessageType, PageAnalysisRequest, AnalysisResult, RiskLevel, SENSITIVITY_THRESHOLDS, ThreatLabel } from '@/types';
+import { Message, MessageType, PageAnalysisRequest, AnalysisResult, RiskLevel, SENSITIVITY_THRESHOLDS, ThreatLabel, AnalysisProgress, SuspiciousPassage, ChunkedAnalysisState } from '@/types';
 import { getApiConfig, getCachedAnalysis, saveCachedAnalysis, clearExpiredCache, isWhitelistedDomain, getExtensionSettings, clearCacheForDomain, clearAllCache } from '@/utils/storage';
 import { createApiClient } from '@/utils/api';
 import { addMessageListener } from '@/utils/messaging';
@@ -14,6 +14,114 @@ const tabAnalysisResults = new Map<number, AnalysisResult>();
 
 // Track pending analyses to prevent duplicates
 const pendingAnalyses = new Set<string>();
+
+// Track chunked analysis state per tab
+const tabChunkedState = new Map<number, ChunkedAnalysisState>();
+
+// Chunking constants
+const CHUNK_SIZE = 2000; // Characters per chunk
+const CHUNK_THRESHOLD = 3000; // Use chunking for content longer than this
+
+/**
+ * Split content into chunks at sentence boundaries
+ */
+function splitContentIntoChunks(content: string, maxChunkSize: number = CHUNK_SIZE): string[] {
+  if (!content || content.length <= maxChunkSize) {
+    return content ? [content] : [];
+  }
+
+  const chunks: string[] = [];
+  let remaining = content;
+
+  while (remaining.length > 0) {
+    if (remaining.length <= maxChunkSize) {
+      chunks.push(remaining);
+      break;
+    }
+
+    // Find a good break point (sentence ending) within the chunk size
+    let breakPoint = maxChunkSize;
+    
+    // Look for sentence endings (. ! ?) followed by space or end
+    const sentenceEnders = ['. ', '! ', '? ', '.\n', '!\n', '?\n'];
+    let bestBreak = -1;
+    
+    for (const ender of sentenceEnders) {
+      const idx = remaining.lastIndexOf(ender, maxChunkSize);
+      if (idx > bestBreak && idx > maxChunkSize * 0.5) {
+        bestBreak = idx + ender.length;
+      }
+    }
+    
+    if (bestBreak > 0) {
+      breakPoint = bestBreak;
+    } else {
+      // Fall back to word boundary
+      const spaceIdx = remaining.lastIndexOf(' ', maxChunkSize);
+      if (spaceIdx > maxChunkSize * 0.5) {
+        breakPoint = spaceIdx + 1;
+      }
+    }
+
+    chunks.push(remaining.substring(0, breakPoint).trim());
+    remaining = remaining.substring(breakPoint).trim();
+  }
+
+  return chunks.filter(c => c.length > 0);
+}
+
+/**
+ * Aggregate chunk results into final analysis result
+ */
+function aggregateChunkResults(
+  state: ChunkedAnalysisState,
+  heuristicThreats: ThreatLabel[] = []
+): AnalysisResult {
+  // Combine all threats (deduplicated)
+  const allThreats = [...new Set([...state.accumulatedThreats, ...heuristicThreats])];
+  
+  // Calculate risk level based on findings
+  let riskLevel: RiskLevel;
+  const passageCount = state.accumulatedPassages.length;
+  const threatCount = allThreats.length;
+  
+  if (passageCount === 0 && threatCount === 0) {
+    riskLevel = RiskLevel.SAFE;
+  } else if (passageCount <= 1 && threatCount <= 1) {
+    riskLevel = RiskLevel.LOW;
+  } else if (passageCount <= 3 || threatCount <= 2) {
+    riskLevel = RiskLevel.MEDIUM;
+  } else if (passageCount <= 5 || threatCount <= 4) {
+    riskLevel = RiskLevel.HIGH;
+  } else {
+    riskLevel = RiskLevel.CRITICAL;
+  }
+  
+  // Calculate confidence based on consistency
+  const chunksWithIssues = state.accumulatedPassages.length > 0 ? 
+    Math.min(state.completedChunks, state.accumulatedPassages.length) : 0;
+  const confidence = passageCount > 0 
+    ? Math.min(0.95, 0.6 + (chunksWithIssues / state.totalChunks) * 0.3)
+    : 0.85;
+  
+  // Build explanation
+  let explanation: string;
+  if (passageCount === 0) {
+    explanation = 'No suspicious content detected across all page sections.';
+  } else {
+    const threatNames = allThreats.map(t => t.replace(/_/g, ' ').toLowerCase()).join(', ');
+    explanation = `Found ${passageCount} suspicious passage(s) indicating: ${threatNames}.`;
+  }
+  
+  return {
+    riskLevel,
+    threats: allThreats,
+    explanation,
+    confidence,
+    timestamp: Date.now(),
+    suspiciousPassages: state.accumulatedPassages,
+  };
+}
 
 /**
  * Handle messages from content scripts and popup
@@ -178,17 +286,123 @@ async function handleAnalyzePage(
     console.log('Cache MISS - Analyzing page with LLM:', request.url);
 
     const apiClient = createApiClient(config);
-    let result = await apiClient.analyzePage(request);
+    const contentLength = request.bodyText?.length || 0;
+    
+    let result: AnalysisResult;
+    
+    // Extract heuristic threats early so they can be used in chunked analysis
+    const heuristicThreats = heuristicResult.findings
+      .map(f => heuristicTypeToThreatLabel(f.type))
+      .filter((t): t is ThreatLabel => t !== null);
+    
+    // =========================================================================
+    // Decide: Chunked vs Single Analysis
+    // =========================================================================
+    
+    if (contentLength > CHUNK_THRESHOLD) {
+      // Chunked analysis for large content
+      console.log(`Content is ${contentLength} chars - using chunked analysis`);
+      
+      const chunks = splitContentIntoChunks(request.bodyText || '');
+      console.log(`Split into ${chunks.length} chunks`);
+      
+      // Initialize chunked state
+      const state: ChunkedAnalysisState = {
+        url: request.url,
+        totalChunks: chunks.length,
+        completedChunks: 0,
+        accumulatedPassages: [],
+        accumulatedThreats: [],
+        startTime: Date.now(),
+      };
+      
+      if (tabId) {
+        tabChunkedState.set(tabId, state);
+      }
+      
+      const context = {
+        url: request.url,
+        domain: domain,
+        title: request.title,
+      };
+      
+      // Send initial progress
+      if (tabId) {
+        const initialProgress: AnalysisProgress = {
+          currentChunk: 0,
+          totalChunks: chunks.length,
+          status: 'analyzing',
+        };
+        try {
+          await browser.tabs.sendMessage(tabId, {
+            type: MessageType.ANALYSIS_PROGRESS,
+            payload: initialProgress,
+          });
+        } catch {
+          // Tab might not be ready, continue anyway
+        }
+      }
+      
+      // Process chunks sequentially
+      for (let i = 0; i < chunks.length; i++) {
+        try {
+          console.log(`Analyzing chunk ${i + 1}/${chunks.length}`);
+          const chunkResult = await apiClient.analyzeChunk(chunks[i], i, context);
+          
+          // Accumulate results
+          state.accumulatedPassages.push(...chunkResult.suspiciousPassages);
+          for (const threat of chunkResult.threats) {
+            if (!state.accumulatedThreats.includes(threat)) {
+              state.accumulatedThreats.push(threat);
+            }
+          }
+          state.completedChunks++;
+          
+          // Send progress update with partial results
+          if (tabId) {
+            const progress: AnalysisProgress = {
+              currentChunk: i + 1,
+              totalChunks: chunks.length,
+              status: 'analyzing',
+              partialResult: {
+                suspiciousPassages: state.accumulatedPassages,
+                threats: state.accumulatedThreats,
+              },
+            };
+            try {
+              await browser.tabs.sendMessage(tabId, {
+                type: MessageType.ANALYSIS_PROGRESS,
+                payload: progress,
+              });
+            } catch {
+              // Continue even if can't send update
+            }
+          }
+        } catch (chunkError) {
+          console.warn(`Chunk ${i} failed:`, chunkError);
+          // Continue with other chunks
+        }
+      }
+      
+      // Aggregate final result
+      result = aggregateChunkResults(state, heuristicThreats);
+      
+      // Clean up state
+      if (tabId) {
+        tabChunkedState.delete(tabId);
+      }
+      
+    } else {
+      // Standard single-request analysis for smaller content
+      console.log(`Content is ${contentLength} chars - using single analysis`);
+      result = await apiClient.analyzePage(request);
+    }
 
     // =========================================================================
     // Combine Heuristic + LLM Results
     // =========================================================================
     
     // Add heuristic-detected threats that LLM might have missed
-    const heuristicThreats = heuristicResult.findings
-      .map(f => heuristicTypeToThreatLabel(f.type))
-      .filter((t): t is ThreatLabel => t !== null);
-    
     const combinedThreats = [...new Set([...result.threats, ...heuristicThreats])];
 
     // Boost risk level if heuristics found issues

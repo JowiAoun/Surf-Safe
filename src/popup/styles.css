@@ -220,6 +220,35 @@ header h1 {
   100% { transform: rotate(360deg); }
 }
 
+/* Analysis Progress */
+.analysis-progress {
+  width: 100%;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--gauge-bg);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 0 20px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-gradient);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.3s ease-out;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
 .hidden {
   display: none !important;
 }

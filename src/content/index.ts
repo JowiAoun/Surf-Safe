@@ -416,7 +416,7 @@ function init(): void {
     setTimeout(handleUrlChange, 500);
   };
   
-  // Listen for trigger from popup (when popup opens but no analysis exists)
+  // Listen for messages from popup and background
   browser.runtime.onMessage.addListener((message: any) => {
     if (message?.type === 'TRIGGER_ANALYSIS') {
       console.log('Received TRIGGER_ANALYSIS from popup');
@@ -426,6 +426,20 @@ function init(): void {
       performAnalysis();
       return Promise.resolve({ triggered: true });
     }
+    
+    // Handle progressive analysis updates
+    if (message?.type === 'ANALYSIS_PROGRESS') {
+      const progress = message.payload;
+      console.log(`Analysis progress: chunk ${progress.currentChunk}/${progress.totalChunks}`);
+      
+      // Apply highlights progressively as passages are found
+      if (progress.partialResult?.suspiciousPassages && progress.partialResult.suspiciousPassages.length > 0) {
+        applyHighlights(progress.partialResult.suspiciousPassages);
+      }
+      
+      return Promise.resolve({ received: true });
+    }
+    
     return undefined;
   });
   

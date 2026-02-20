@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill';
-import { MessageType, AnalysisResult, RiskLevel, ThreatLabel, FeedbackType, UserFeedback } from '@/types';
+import { MessageType, AnalysisResult, RiskLevel, ThreatLabel, FeedbackType, UserFeedback, AnalysisProgress } from '@/types';
 import { sendToBackground, createMessage } from '@/utils/messaging';
 import { saveUserFeedback, generateExportReport, getApiConfig } from '@/utils/storage';
 import { isProtectedUrl } from '@/utils/sanitize';
@@ -10,6 +10,10 @@ import { isProtectedUrl } from '@/utils/sanitize';
 
 const containerEl = document.querySelector('.container') as HTMLElement;
 const loadingEl = document.getElementById('loading')!;
+const loadingTextEl = document.getElementById('loading-text')!;
+const analysisProgressEl = document.getElementById('analysis-progress')!;
+const progressFillEl = document.getElementById('progress-fill')!;
+const progressTextEl = document.getElementById('progress-text')!;
 const errorEl = document.getElementById('error')!;
 const errorIconEl = document.querySelector('.error-icon')!;
 const errorMessageEl = document.getElementById('error-message')!;
@@ -726,5 +730,48 @@ async function init(): Promise<void> {
     currentAnalysis = analysis;
   }
 }
+
+// ============================================================================
+// Progress Updates for Chunked Analysis
+// ============================================================================
+
+/**
+ * Update the progress indicator for chunked analysis
+ */
+function updateProgress(progress: AnalysisProgress): void {
+  if (progress.status === 'analyzing' && progress.totalChunks > 1) {
+    // Show progress indicator
+    loadingTextEl.textContent = 'Analyzing large page...';
+    analysisProgressEl.classList.remove('hidden');
+    
+    // Update progress bar
+    const percentage = (progress.currentChunk / progress.totalChunks) * 100;
+    progressFillEl.style.width = `${percentage}%`;
+    progressTextEl.textContent = `Analyzing section ${progress.currentChunk} of ${progress.totalChunks}...`;
+    
+    // Show intermediate findings count if any
+    if (progress.partialResult?.suspiciousPassages && progress.partialResult.suspiciousPassages.length > 0) {
+      progressTextEl.textContent = `Analyzing section ${progress.currentChunk} of ${progress.totalChunks}... (${progress.partialResult.suspiciousPassages.length} finding${progress.partialResult.suspiciousPassages.length > 1 ? 's' : ''} so far)`;
+    }
+  }
+}
+
+/**
+ * Reset progress indicator
+ */
+function resetProgress(): void {
+  analysisProgressEl.classList.add('hidden');
+  progressFillEl.style.width = '0%';
+  progressTextEl.textContent = 'Analyzing section 1 of 1...';
+  loadingTextEl.textContent = 'Scouting the waters...';
+}
+
+// Listen for progress messages from background
+browser.runtime.onMessage.addListener((message: any) => {
+  if (message?.type === MessageType.ANALYSIS_PROGRESS) {
+    updateProgress(message.payload as AnalysisProgress);
+  }
+  return undefined;
+});
 
 init();

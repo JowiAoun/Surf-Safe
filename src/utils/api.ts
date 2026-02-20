@@ -9,6 +9,8 @@ import {
   ApiError,
   ApiErrorType,
   ApiRequestOptions,
+  ChunkAnalysisResult,
+  SuspiciousPassage,
 } from '@/types';
 
 /**
@@ -422,9 +424,11 @@ Respond in JSON format:
   "threats": ["THREAT1", "THREAT2"],
   "explanation": "Brief explanation of findings",
   "suspiciousPassages": [
-    {"text": "exact suspicious text from page", "labels": ["THREAT1"], "reason": "why this is suspicious"}
+    {"text": "EXACT verbatim text copied character-for-character from the page content above", "labels": ["THREAT1"], "reason": "why this is suspicious"}
   ]
-}`;
+}
+
+CRITICAL: For suspiciousPassages.text, you MUST copy the EXACT text verbatim from the page content provided above. Do NOT paraphrase, summarize, or modify the text in any way. The text must match exactly what appears on the page so it can be highlighted.`;
   }
 
   /**
@@ -516,6 +520,194 @@ Risk Level Guidelines:
         `Invalid LLM response format: ${error instanceof Error ? error.message : 'Unknown error'}`,
         ApiErrorType.INVALID_RESPONSE
       );
+    }
+  }
+
+  /**
+   * Timeout for chunk analysis (shorter than full page analysis)
+   */
+  private static readonly CHUNK_TIMEOUT_MS = 15000;
+
+  /**
+   * Analyze a single chunk of page content for scam indicators
+   */
+  async analyzeChunk(
+    chunk: string,
+    chunkIndex: number,
+    context: { url: string; domain: string; title: string }
+  ): Promise<ChunkAnalysisResult> {
+    const prompt = this.buildChunkPrompt(chunk, context);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), LLMApiClient.CHUNK_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(this.config.apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.config.model,
+          messages: [
+            {
+              role: 'system',
+              content: this.getChunkSystemPrompt(),
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.3,
+          max_tokens: 800,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await createApiErrorFromResponse(response);
+        throw error;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        // Return empty result if no content (chunk might be benign)
+        return {
+          chunkIndex,
+          suspiciousPassages: [],
+          threats: [],
+        };
+      }
+
+      return this.parseChunkResponse(content, chunkIndex);
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn(`Chunk ${chunkIndex} analysis timed out`);
+        // Return empty result on timeout - don't fail the whole analysis
+        return {
+          chunkIndex,
+          suspiciousPassages: [],
+          threats: [],
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Build prompt for chunk analysis
+   */
+  private buildChunkPrompt(
+    chunk: string,
+    context: { url: string; domain: string; title: string }
+  ): string {
+    return `Analyze this section of a webpage for scam/phishing indicators.
+
+Website Context:
+- URL: ${context.url}
+- Domain: ${context.domain}
+- Title: ${context.title}
+
+Content Section:
+${chunk}
+
+Look for these threat indicators in the content:
+- URGENCY: Time-pressure tactics ("Act now!", "Limited time offer")
+- PRESSURE: Coercive language ("You must", "Account will be closed")
+- TOO_GOOD_TO_BE_TRUE: Unrealistic promises (huge discounts, free money)
+- POOR_GRAMMAR: Language quality issues (typos, awkward phrasing)
+- SENSITIVE_DATA_REQ: Unusual data requests (SSN, full card details)
+- FAKE_TRUST_SIGNALS: False authority badges (fake security seals)
+- IMPERSONATION: Brand/entity mimicry (fake logos, brand name variations)
+
+If you find suspicious content, respond with JSON:
+{
+  "suspiciousPassages": [
+    {"text": "EXACT verbatim text from content", "labels": ["THREAT_TYPE"], "reason": "brief explanation"}
+  ]
+}
+
+If no issues found, respond with:
+{"suspiciousPassages": []}
+
+CRITICAL: Copy suspicious text EXACTLY as it appears. Do not paraphrase.`;
+  }
+
+  /**
+   * System prompt for chunk analysis
+   */
+  private getChunkSystemPrompt(): string {
+    return `You are a scam detection system analyzing webpage content in segments. Your job is to find specific suspicious text passages and categorize them.
+
+Guidelines:
+- Focus on finding actual problematic text, not summarizing
+- Copy suspicious text EXACTLY - it will be used for highlighting
+- Only flag text that shows clear warning signs
+- Keep reasons brief (under 50 characters)
+- Respond ONLY with valid JSON
+- If nothing suspicious, return empty suspiciousPassages array`;
+  }
+
+  /**
+   * Parse chunk analysis response
+   */
+  private parseChunkResponse(content: string, chunkIndex: number): ChunkAnalysisResult {
+    try {
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch =
+        content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
+      const jsonString = jsonMatch ? jsonMatch[1] : content;
+      const parsed = JSON.parse(jsonString.trim());
+
+      const suspiciousPassages: SuspiciousPassage[] = [];
+      const threats: ThreatLabel[] = [];
+
+      if (Array.isArray(parsed.suspiciousPassages)) {
+        for (const p of parsed.suspiciousPassages) {
+          if (p && typeof p.text === 'string' && p.text.length > 0) {
+            const labels = Array.isArray(p.labels)
+              ? p.labels.filter((l: string) => Object.values(ThreatLabel).includes(l as ThreatLabel))
+              : [];
+
+            suspiciousPassages.push({
+              text: String(p.text).substring(0, 200),
+              labels: labels as ThreatLabel[],
+              confidence: 0.7, // Default confidence for chunk-level findings
+              reason: String(p.reason || '').substring(0, 100),
+            });
+
+            // Collect unique threats
+            for (const label of labels) {
+              if (!threats.includes(label as ThreatLabel)) {
+                threats.push(label as ThreatLabel);
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        chunkIndex,
+        suspiciousPassages,
+        threats,
+      };
+    } catch (error) {
+      console.warn(`Failed to parse chunk ${chunkIndex} response:`, content);
+      // Return empty result on parse error
+      return {
+        chunkIndex,
+        suspiciousPassages: [],
+        threats: [],
+      };
     }
   }
 

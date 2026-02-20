@@ -513,22 +513,27 @@ function navigatePrev(): void {
 }
 
 /**
- * Find and wrap matching text in the DOM
+ * Normalize text for comparison (collapse whitespace, lowercase)
  */
-function findAndHighlightText(passage: SuspiciousPassage): number {
-  const searchText = passage.text.trim();
-  if (!searchText || searchText.length < 3) return 0;
-  
-  let highlightCount = 0;
-  const severity = getSeverity(passage.labels);
-  
-  // Create TreeWalker to find text nodes
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/['']/g, "'")
+    .replace(/[""]/g, '"')
+    .trim();
+}
+
+/**
+ * Get all text nodes in order from an element (for cross-node matching)
+ */
+function getTextNodes(root: Element): Text[] {
+  const textNodes: Text[] = [];
   const walker = document.createTreeWalker(
-    document.body,
+    root,
     NodeFilter.SHOW_TEXT,
     {
       acceptNode: (node) => {
-        // Skip script, style, and already highlighted content
         const parent = node.parentElement;
         if (!parent) return NodeFilter.FILTER_REJECT;
         
@@ -540,65 +545,270 @@ function findAndHighlightText(passage: SuspiciousPassage): number {
           return NodeFilter.FILTER_REJECT;
         }
         
-        // Check if text contains our search term
-        const text = node.textContent || '';
-        if (text.toLowerCase().includes(searchText.toLowerCase())) {
-          return NodeFilter.FILTER_ACCEPT;
-        }
-        return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
       }
     }
   );
 
-  const nodesToProcess: Text[] = [];
   let node: Node | null;
-  while ((node = walker.nextNode()) && nodesToProcess.length < 10) {
-    nodesToProcess.push(node as Text);
+  while ((node = walker.nextNode())) {
+    textNodes.push(node as Text);
   }
+  return textNodes;
+}
 
-  for (const textNode of nodesToProcess) {
-    const text = textNode.textContent || '';
-    const lowerText = text.toLowerCase();
-    const lowerSearch = searchText.toLowerCase();
-    const index = lowerText.indexOf(lowerSearch);
-    
-    if (index === -1) continue;
-    
-    // Split and wrap
-    const before = text.substring(0, index);
-    const match = text.substring(index, index + searchText.length);
-    const after = text.substring(index + searchText.length);
-    
-    const parent = textNode.parentNode;
-    if (!parent) continue;
-    
-    // Create highlight mark
-    const mark = document.createElement('mark');
-    mark.className = `${PREFIX}-highlight ${PREFIX}-highlight--${severity}`;
-    mark.textContent = match;
-    mark.dataset.surfsafePassage = JSON.stringify(passage);
-    
-    // Add event listeners
-    mark.addEventListener('mouseenter', () => showTooltip(mark, passage));
-    mark.addEventListener('mouseleave', hideTooltip);
-    mark.addEventListener('focus', () => showTooltip(mark, passage));
-    mark.addEventListener('blur', hideTooltip);
-    mark.setAttribute('tabindex', '0');
-    
-    // Replace text node with split content
-    const fragment = document.createDocumentFragment();
-    if (before) fragment.appendChild(document.createTextNode(before));
-    fragment.appendChild(mark);
-    if (after) fragment.appendChild(document.createTextNode(after));
-    
-    parent.replaceChild(fragment, textNode);
-    highlightCount++;
-    
-    // Only highlight first occurrence per passage
-    break;
+/**
+ * Build concatenated text from nodes with position mapping
+ */
+interface TextPosition {
+  node: Text;
+  start: number;  // Position in concatenated string
+  end: number;
+  nodeOffset: number;  // Start offset within the node
+}
+
+function buildTextMap(textNodes: Text[]): { text: string; positions: TextPosition[] } {
+  let fullText = '';
+  const positions: TextPosition[] = [];
+  
+  for (const node of textNodes) {
+    const nodeText = node.textContent || '';
+    if (nodeText.trim()) {
+      positions.push({
+        node,
+        start: fullText.length,
+        end: fullText.length + nodeText.length,
+        nodeOffset: 0
+      });
+      fullText += nodeText;
+    }
   }
   
-  return highlightCount;
+  return { text: fullText, positions };
+}
+
+/**
+ * Find the best matching substring using various strategies
+ */
+function findBestMatch(haystack: string, needle: string): { start: number; end: number } | null {
+  const normalizedHaystack = normalizeText(haystack);
+  const normalizedNeedle = normalizeText(needle);
+  
+  // Debug: Log first 200 chars of page text and needle
+  console.log(`SurfSafe DEBUG: Looking for "${normalizedNeedle.substring(0, 80)}..."`);
+  console.log(`SurfSafe DEBUG: Page text sample: "${normalizedHaystack.substring(0, 300)}..."`);
+  
+  // Strategy 1: Exact normalized match
+  const exactIndex = normalizedHaystack.indexOf(normalizedNeedle);
+  if (exactIndex !== -1) {
+    console.log('SurfSafe DEBUG: Found exact normalized match');
+    return findOriginalPosition(haystack, normalizedHaystack, exactIndex, normalizedNeedle.length);
+  }
+  
+  // Strategy 2: Match first portion (first 25 chars)
+  if (normalizedNeedle.length > 25) {
+    const firstPart = normalizedNeedle.substring(0, 25);
+    const firstIndex = normalizedHaystack.indexOf(firstPart);
+    if (firstIndex !== -1) {
+      console.log(`SurfSafe DEBUG: Found first 25 chars: "${firstPart}"`);
+      const mapped = findOriginalPosition(haystack, normalizedHaystack, firstIndex, Math.min(normalizedNeedle.length, 100));
+      if (mapped) return mapped;
+    }
+  }
+  
+  // Strategy 3: Word-based partial match - try 2+ significant word sequences
+  const needleWords = normalizedNeedle.split(/\s+/).filter(w => w.length > 2);
+  
+  // Try to find 4 consecutive words
+  if (needleWords.length >= 4) {
+    for (let i = 0; i <= needleWords.length - 4; i++) {
+      const sequence = needleWords.slice(i, i + 4).join(' ');
+      const seqIndex = normalizedHaystack.indexOf(sequence);
+      if (seqIndex !== -1) {
+        console.log(`SurfSafe DEBUG: Found 4-word sequence: "${sequence}"`);
+        return findOriginalPosition(haystack, normalizedHaystack, seqIndex, sequence.length);
+      }
+    }
+  }
+  
+  // Try to find 3 consecutive words
+  if (needleWords.length >= 3) {
+    for (let i = 0; i <= needleWords.length - 3; i++) {
+      const sequence = needleWords.slice(i, i + 3).join(' ');
+      const seqIndex = normalizedHaystack.indexOf(sequence);
+      if (seqIndex !== -1) {
+        console.log(`SurfSafe DEBUG: Found 3-word sequence: "${sequence}"`);
+        return findOriginalPosition(haystack, normalizedHaystack, seqIndex, sequence.length);
+      }
+    }
+  }
+  
+  // Try 2 consecutive words (more aggressive)
+  if (needleWords.length >= 2) {
+    for (let i = 0; i <= needleWords.length - 2; i++) {
+      const sequence = needleWords.slice(i, i + 2).join(' ');
+      // Only match if sequence is at least 10 chars to avoid false positives
+      if (sequence.length >= 10) {
+        const seqIndex = normalizedHaystack.indexOf(sequence);
+        if (seqIndex !== -1) {
+          console.log(`SurfSafe DEBUG: Found 2-word sequence: "${sequence}"`);
+          return findOriginalPosition(haystack, normalizedHaystack, seqIndex, sequence.length);
+        }
+      }
+    }
+  }
+  
+  // Strategy 4: Find any distinctive single word (5+ chars) as last resort
+  const distinctiveWords = needleWords.filter(w => w.length >= 5 && !isCommonWord(w));
+  for (const word of distinctiveWords) {
+    const wordIndex = normalizedHaystack.indexOf(word);
+    if (wordIndex !== -1) {
+      // Extend the match to include surrounding context
+      const extendedStart = Math.max(0, wordIndex - 10);
+      const extendedLength = word.length + 20;
+      console.log(`SurfSafe DEBUG: Found distinctive word: "${word}"`);
+      return findOriginalPosition(haystack, normalizedHaystack, wordIndex, word.length);
+    }
+  }
+  
+  console.log('SurfSafe DEBUG: No match found with any strategy');
+  return null;
+}
+
+/**
+ * Check if a word is too common to be used for matching
+ */
+function isCommonWord(word: string): boolean {
+  const commonWords = new Set([
+    'about', 'after', 'again', 'being', 'before', 'below', 'between',
+    'could', 'does', 'doing', 'during', 'each', 'have', 'having',
+    'here', 'itself', 'just', 'more', 'most', 'other', 'over',
+    'same', 'should', 'some', 'such', 'than', 'that', 'their',
+    'them', 'then', 'there', 'these', 'they', 'this', 'those',
+    'through', 'under', 'very', 'what', 'when', 'where', 'which',
+    'while', 'will', 'with', 'would', 'your', 'from', 'into'
+  ]);
+  return commonWords.has(word.toLowerCase());
+}
+
+/**
+ * Map from normalized string position back to original string position
+ */
+function findOriginalPosition(
+  original: string, 
+  normalized: string, 
+  normalizedStart: number, 
+  normalizedLength: number
+): { start: number; end: number } | null {
+  // Simple approximation: walk both strings in parallel
+  let origIndex = 0;
+  let normIndex = 0;
+  let matchStart = -1;
+  
+  while (origIndex < original.length && normIndex < normalizedStart) {
+    const origChar = original[origIndex].toLowerCase();
+    const normChar = normalized[normIndex];
+    
+    if (origChar === normChar || (origChar.match(/\s/) && normChar === ' ')) {
+      normIndex++;
+    } else if (original[origIndex].match(/\s/)) {
+      // Skip extra whitespace in original
+    }
+    origIndex++;
+  }
+  
+  matchStart = origIndex;
+  
+  // Find end position
+  let matchLength = 0;
+  while (origIndex < original.length && normIndex < normalizedStart + normalizedLength) {
+    const origChar = original[origIndex].toLowerCase();
+    const normChar = normalized[normIndex];
+    
+    if (origChar === normChar || (origChar.match(/\s/) && normChar === ' ')) {
+      normIndex++;
+    }
+    origIndex++;
+    matchLength++;
+  }
+  
+  if (matchStart >= 0 && matchLength > 0) {
+    return { start: matchStart, end: matchStart + matchLength };
+  }
+  
+  return null;
+}
+
+/**
+ * Find and wrap matching text in the DOM with improved matching
+ */
+function findAndHighlightText(passage: SuspiciousPassage): number {
+  const searchText = passage.text.trim();
+  if (!searchText || searchText.length < 3) return 0;
+  
+  const severity = getSeverity(passage.labels);
+  
+  // Get all text nodes and build concatenated text
+  const textNodes = getTextNodes(document.body);
+  const { text: fullText, positions } = buildTextMap(textNodes);
+  
+  // Find the best match in the full text
+  const match = findBestMatch(fullText, searchText);
+  
+  if (!match) {
+    console.log(`SurfSafe: No match found for: "${searchText.substring(0, 50)}..."`);
+    return 0;
+  }
+  
+  // Find which text node(s) contain the match
+  const matchStart = match.start;
+  const matchEnd = match.end;
+  
+  // Find the node containing the start of the match
+  for (const pos of positions) {
+    if (matchStart >= pos.start && matchStart < pos.end) {
+      const node = pos.node;
+      const nodeText = node.textContent || '';
+      const localStart = matchStart - pos.start;
+      const localEnd = Math.min(matchEnd - pos.start, nodeText.length);
+      
+      if (localStart >= nodeText.length) continue;
+      
+      const parent = node.parentNode;
+      if (!parent) continue;
+      
+      // Extract the portions
+      const before = nodeText.substring(0, localStart);
+      const matchedText = nodeText.substring(localStart, localEnd);
+      const after = nodeText.substring(localEnd);
+      
+      // Create highlight mark
+      const mark = document.createElement('mark');
+      mark.className = `${PREFIX}-highlight ${PREFIX}-highlight--${severity}`;
+      mark.textContent = matchedText;
+      mark.dataset.surfsafePassage = JSON.stringify(passage);
+      
+      // Add event listeners
+      mark.addEventListener('mouseenter', () => showTooltip(mark, passage));
+      mark.addEventListener('mouseleave', hideTooltip);
+      mark.addEventListener('focus', () => showTooltip(mark, passage));
+      mark.addEventListener('blur', hideTooltip);
+      mark.setAttribute('tabindex', '0');
+      
+      // Replace text node with split content
+      const fragment = document.createDocumentFragment();
+      if (before) fragment.appendChild(document.createTextNode(before));
+      fragment.appendChild(mark);
+      if (after) fragment.appendChild(document.createTextNode(after));
+      
+      parent.replaceChild(fragment, node);
+      
+      console.log(`SurfSafe: Highlighted "${matchedText.substring(0, 40)}..."`);
+      return 1;
+    }
+  }
+  
+  return 0;
 }
 
 /**
